@@ -1,0 +1,12 @@
+{
+  "name": "MSIStickyScript",
+  "version": "0.1.0",
+  "description": "MSI Sticky project related nodeJs script",
+  "author": "James Chang",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "urllib-sync": "^1.1.2",
+    "pg": "6.4.0",
+    "ps": "0.0.2"
+  }
+}

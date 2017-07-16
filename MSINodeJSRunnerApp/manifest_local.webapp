@@ -1,0 +1,13 @@
+{
+	"version":"0.1"
+	,"name":"MIS Update Sticky DataValue App"
+	,"description":"Allows to update sticky data values in a server from a Date to TODAY with specify program(s)."
+	,"icons":{"16":null,"48":"img/icons/icon.png","128":null}
+	,"developer":{"url":"","name":"Tran Chau","company":null,"email":null}
+	,"launch_path":"index.html"
+	,"installs_allowed_from":null
+	,"default_locale":"en"
+	,"activities": {
+	  "dhis": { "href": "*" }
+	}
+}

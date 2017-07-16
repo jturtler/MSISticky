@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MSI Sticky Data</title>
+<meta charset="UTF-8">
+
+	<script src="js/jQuery/jquery-1.9.1.min.js"></script>
+	<script src="js/jQuery/jquery-ui.min.js"></script>
+	<script src="js/jQuery/jquery.blockUI.js"></script>
+	<script src="js/jQuery/jquery.tablesorter.js"></script>
+
+	 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mockjax/1.6.2/jquery.mockjax.js"></script>
+	 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mockjax/1.6.2/jquery.mockjax.min.js"></script>
+  
+  
+	<script src="js/utils/util.js"></script>
+	<script src="js/utils/RESTUtil.js"></script>
+	<script src="js/utils/MsgManager.js"></script>
+	
+
+	<link rel="stylesheet" href="css/app/style.css">
+	<link rel="stylesheet" href="css/jQuery/jquery-ui.css">
+	
+	<script src="js/orgunit.js"></script>
+	<script src="js/oust.js"></script>
+	<script src="js/app.js"></script>
+</head>
+
+<body>
+
+	<div id="header">
+		<img id="headerBanner" src="img/logo_banner.png" style="cursor:pointer" title="View home page">
+		<span id="headerText" style="cursor:pointer" title="View home page"></span>
+		<div id="headerRightSideControls">
+			<a href="https://docs.google.com/document/d/1s8IFPCOeRfTsOO1DMwgDKO95V1pBsZykPUU9do71spc" target="_blank" style="color: White;">v 0.07</a>
+			<button type="button" id="settingsBtn">Settings</button> | <button type="button" id="closeButton" onclick="window.location.href='../../../dhis-web-dashboard-integration/index.action'"><span nameId='closeButton'>Close</span></button>
+		</div>
+	</div>
+
+	<div style="margin-top:55px;">
+
+		<div class="pageTitle">MSI Sticky Data</div>
+
+		<fieldset id="analyticsSet">
+			<legend>Params.</legend>
+
+			<table class="mainParamTable" width="100%">
+				
+				
+				<!-- Program List -->
+				<tr>
+					<th colspan="2" style="text-align:left;background-color: #a0b4de;">Program</th>
+				</tr>
+				<tr>
+					<td><span style="margin-right: 10px;">Program</span> <select id="programs"></select></td>
+					<td><div class="divActionType" style="display:none;">
+							<span style="margin-right: 10px;">Action Type</span> 
+							<select id="programActionType">
+								<option value="" Selected>Select Action Type</option>
+								<option value="Unknown">Set Unknown</option>
+								<option value="SetData">Set Event/Aggr Data</option>
+							</select>
+						</div>
+					</td>
+				</tr>
+				
+				<tr><td colspan="2" style="margin:10px;">&nbsp;</td></tr>
+								
+				<!-- Date range -->
+				<tr class="belowProgram trDateRange">
+					<th colspan="2" style="text-align:left;background-color: #a0b4de;">Date for pogram 2.0</th>
+				</tr>
+				<tr class="belowProgram trDateRange">
+					<td>
+						<div class="divStartDate" style="display:none;">
+							<span style="margin-right: 10px;">From</span> 
+							<input type="text" id="startDate" />
+						</div>
+					</td>
+					<td>
+						<div class="divEndDate" style="display:none;">
+							<span style="margin-right: 10px;">To</span>
+							<input type="text" id="endDate" />
+						</div>
+					</td>
+				</tr>
+				
+				<tr class="belowProgram trDateRange"><td colspan="2" style="margin:10px;">&nbsp;</td></tr>
+				
+				<!-- Orgunit Tree -->
+				<tr class="belowProgram">
+					<th colspan="2" style="text-align:left;background-color: #a0b4de;">Org Unit Selection</th>
+				</tr>
+				
+				<tr class="belowProgram">
+					<td colspan="2">
+						<div id="orgUnitTreeContainer">
+							<div id="selectionTree"></div>
+						</div>
+					</td>
+				</tr>
+				
+				
+				<tr class="belowProgram">
+					<td>
+						<button id="runBtn" class="steelBlueButton" style="width:50px;margin-top:10px;">Run</button>
+					</td>
+				</tr>
+			</table>
+			
+		</fieldset>	
+			
+		<div id='loaderDiv' style='display:none;'>
+			<table>
+				<tr>
+					<td>
+						<div id='progressDiv' style="font-size: 13px; font-style:italic; color:#191970; width:100%;"></div>
+					</td>
+					<td>
+						<img src='img/loading.gif'>
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+			
+		<div id='dataValueResultDiv' style="display: none;margin-top:15px;"></div>
+		
+		<div id="settingsDiv" style="display:none;">
+			<table>
+				<tr>
+					<td>Servlet location to run nodeJS</td>
+					<td><input type="text" id="servletLocation" placeholder="http://localhost:8080/MSINodeJSRunnerApp"></td>
+				</tr>
+				
+				<tr id="settingsMsg" style="display:none;color:brown;font-style:italic;">
+					<td colspan="2"></td>
+				</tr>
+			</table>
+		</div>
+
+	</div>
+
+</body>
+
+<script>
+	$(document).ready(function(){
+		new UpdateStickyDataValue();
+	});
+</script>
+</html>

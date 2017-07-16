@@ -1,0 +1,904 @@
+﻿<div id="loadingDiv"><img src="../images/ajax-loader-circle.gif" /></div>
+
+<style>
+	.formCtrlReadOnly
+	{
+		border: 0;
+		font-style: italic;
+		background-color: White !IMPORTANT;
+	}
+	.noteComment
+	{
+		height: 70px;
+		width: 100%;
+	}
+</style>
+
+<div id="misSegStatusLogDiv">
+<table width="100%">
+	<tr>
+		<td><strong>MSI Segmentation Log</strong></td>
+		<td align="right"><a href="https://docs.google.com/document/d/1s8IFPCOeRfTsOO1DMwgDKO95V1pBsZykPUU9do71spc" title="version doc" target="_blank" style="color: #276696">v 0.5</a></td>
+	</tr>
+</table>
+
+<div style="display: flex;justify-content: center;">
+<table border="0" cellpadding="1" cellspacing="0" class="table" style="align-self: center;">
+	<tbody>
+		<tr>
+			<td style="width: 35%"><label>Previous Status</label></td>
+			<td><input id="PsdqRrx0KbU-T2iHkAEidOd-val" class="previousStatus formCtrlReadOnly" name="entryfield" title="T2iHkAEidOd - Log - Previous Segmentation - undefined" value="[Log - Previous Segmentation]" /></td>
+		</tr>
+		<tr>
+			<td><label>New Status</label></td>
+			<td><input id="PsdqRrx0KbU-wYoGZDnvu3n-val" class="newStatus" name="entryfield" title="[ wYoGZDnvu3n - Log - New Segmentation - TEXT ]" value="[Log - New Segmentation]" /></td>
+		</tr>
+		<tr>
+			<td><label>Days Elasped Since Previous Status</label></td>
+			<td><input id="qofz8VA3rt4-UrD7yr6JLEf-val" class="daysSincePrev formCtrlReadOnly" name="entryfield" title="UrD7yr6JLEf - Log - days elapsed from previous status - undefined" value="[Log - days elapsed from previous status]" /></td>
+		</tr>		
+		<tr>
+			<td><label>Comments</label></td>
+			<td><input class="noteComment" id="PsdqRrx0KbU-Yww3Z8MYo1e-val" name="entryfield" title="Yww3Z8MYo1e - Log - Notes - undefined" value="[Log - Notes]" /></td>
+		</tr>
+	</tbody>
+</table>
+
+
+</div>
+
+<script>
+
+	jQuery( document ).ready( function() {
+
+		new MISSegStatusLog();
+
+	});
+
+	function MISSegStatusLog()
+	{
+		var me = this;
+		
+		me.misSegStatusLogDivTag = $("#misSegStatusLogDiv");
+		me.loadingDivTag = $("#loadingDiv");
+		
+		
+		me._queryURL_api = "../api/";
+		me._queryUrl_dataValueSet = me._queryURL_api + 'dataValueSets';
+		
+		me.curEventDate = "";
+		me.currentEvent;
+		me.latestEvent;
+		me.lastEvent;
+		me.eventList;
+		me.caseType = "";
+		me.formDisabled = false;
+		
+		me.PROGRAM_ID = "nPVbI9R3Avm";
+		me.STAGE_ID = "PsdqRrx0KbU";
+		
+		me.EVENT_DE_SEGMENTATION = "wYoGZDnvu3n";
+		me.EVENT_DE_NOTE = "Yww3Z8MYo1e";
+		
+		me.EVENT_DE_SEGMENT_PREVIOUS = "T2iHkAEidOd";
+		me.EVENT_DE_DAYS_IN_PREV = "UrD7yr6JLEf";	
+
+		me.AGG_DE_SEGMENTATION_A = "IXd6OFCZAfl";
+		me.AGG_DE_SEGMENTATION_B = "lwhzwU6nrJh";
+		me.AGG_DE_SEGMENTATION_C = "RDAsWi4QOmo";
+		me.AGG_DE_SEGMENTATION_D = "Mo76PCg8nZf";
+		me.AGG_DE_SEGMENTATION_UNKNOWN = "WlwUwXL7zjg";
+		me.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH = "DRvlWf9T4tg";
+		me.AGG_DE_SEGMENTATION_MONTHS_SINCE_LAST_UPDATE = "hXLyGfE2sFi";
+		me.AGG_DE_SEGMENTATION_DATE_LAST_CHANGE = "k0Ws0xA2vDj";
+		
+		me.eventDateTag = angular.element("[input-field-id='eventDate']");
+		me.updateEventBtnTag = $('button').parent().find("[ng-click='updateEvent()']");
+		me.addEvent1BtnTag = $('button').parent().find("[ng-click='addEvent(true)']");
+		me.addEvent2BtnTag = $('button').parent().find("[ng-click='addEvent()']");
+		
+		
+		me.daysFromPreviousStatusInputTag = $( '#qofz8VA3rt4-UrD7yr6JLEf-val' );
+				
+		me.newStatusClassName = ".newStatus";
+		me.previousStatusClassName = ".previousStatus";
+		me.daysSincePrevClassName = ".daysSincePrev"; 
+
+
+		// ====================================================
+
+		me.init = function()
+		{		
+			me.misSegStatusLogDivTag.hide();
+			me.loadingDivTag.show();
+			me.loadInitData();
+		};
+		
+		
+		me.setUp_Events = function()
+		{
+			$('button').parent().find("[ng-click='updateEvent()']").click( function(e){
+				//e.preventDefault();
+				me.saveDataValuesAndUpdateOuGroups( "UPDATE" );
+			});
+			
+			$('button').parent().find("[ng-click='addEvent(true)']").click( function(){
+				me.saveDataValuesAndUpdateOuGroups( "NEW" );
+			});
+			
+			$('button').parent().find("[ng-click='addEvent()']").click( function(){
+				me.saveDataValuesAndUpdateOuGroups( "NEW" );
+			});
+			
+			me.eventDateTag.change( function(e){
+				// After the form is loaded, changing the event date.
+				// Will not trigger on NEW event - first date selection.
+
+				e.preventDefault();	
+				
+				var dateValid = me.checkCurrentEventDate( $(this).val(), me.curEventDate );
+				
+				me.disableEventBtn( me.formDisabled || !dateValid );
+
+
+				if ( me.caseType === "NEW" || me.caseType === "LATEST" ) 
+				{
+					me.setDaysSincePrev( me.lastEvent, me.currentEvent );
+				}
+
+			});
+			
+		};
+		
+		me.checkCurrentEventDate = function( eventDate, lastEventDate )
+		{
+			var eventDateCheck = false;
+
+			if( lastEventDate != "" && eventDate < lastEventDate )
+			{
+				eventDateCheck = false;
+				$(".eventDateWarnMsg").show();
+			}
+			else
+			{
+				eventDateCheck = true;
+				$(".eventDateWarnMsg").hide();
+			}
+
+			return eventDateCheck;
+		};
+
+		
+		me.disableEventBtn = function( disabled )
+		{
+			Util.disableTag( me.updateEventBtnTag, disabled );
+			Util.disableTag( me.addEvent1BtnTag, disabled );
+			Util.disableTag( me.addEvent2BtnTag, disabled );
+		};
+		
+		// -------------------------------------------------------------------------
+		// Get Current status - This is the "Status" data value of latest event
+		// -------------------------------------------------------------------------
+		
+		me.loadInitData = function()
+		{
+			me.currentEvent = angular.element("form").scope().currentEvent;
+
+			$.ajax(
+			{
+				type: "GET"
+				,url: me._queryURL_api + "dataElements/" + me.EVENT_DE_SEGMENTATION + ".json?fields=optionSet[options[code,name]]"
+				,success: function( response ) 
+				{
+					me.statusCodeOptions = {};
+					me.statusNameOptions = {};
+					var options = response.optionSet.options;
+					for( var i in options )
+					{
+						var option = options[i];
+						me.statusCodeOptions[option.code] = option.name;
+						me.statusNameOptions[option.name] = option.code;
+					}
+				}
+			}).done( function() {
+				me.getCurrentStatus( function() 
+				{
+					// me.daysFromPreviousStatusInputTag.focus();
+					// angular.element(me.newStatusClassName).click();
+				});
+			});
+		};
+
+		// -------------------------------------------------------------------------
+		// Get Current status - This is the "Status" data value of latest event
+		// -------------------------------------------------------------------------
+
+		me.getCurrentStatus = function( returnFunc )
+		{
+			var ouId = angular.element($("#orgUnitTree .selected")).closest('li').attr('id').replace('orgUnit','')
+
+			var url = me._queryURL_api + "events.json?program=" + me.PROGRAM_ID + "&stage=" + me.STAGE_ID + "&orgUnit=" + ouId + "&fields=event,eventDate,dataValues[dataElement,value]" + "&totalPages=false&order=eventDate:DESC";
+			// Not using paging due to 'Months Since joining' needing to check all data.
+
+			//"&totalPages=true&page=1&order=eventDate:DESC";
+			// &pageSize=2  <-- Setting this somehow breaks the ordering.
+
+			$.ajax(
+			{
+				type: "GET"
+				,url: url
+				,beforeSend: function( xhr ) {
+					// Progress/Loading Bar?  Hide the main section?
+				}
+				,success: function( response ) 
+				{
+					me.curEventDate = "";
+					me.caseType = "";
+					me.formDisabled = false;
+					me.eventList = response.events;
+
+
+					if( me.eventList.length > 0 )
+					{
+						// STEP 1. Get latest event AND previous of latest event
+						var latestEvent = me.eventList[0];
+						me.latestEvent = latestEvent;
+
+						var prevEvent = ( me.eventList.length > 1 ) ? me.eventList[1] : undefined;
+
+						me.caseType = me.getCaseType( me.currentEvent, latestEvent );					
+						
+
+						// STEP 1. Get Last Event based on caseType
+						me.lastEvent = me.getLastEvent( me.caseType, latestEvent, prevEvent );
+
+
+						// STEP 2. Disable/Enable Form
+						me.formDisabled = ( me.caseType === "OLD" );
+						me.disableForm( me.formDisabled );
+						
+
+						// STEP 4. Get CurEventDate
+						me.curEventDate = me.getCurEventDate( me.caseType, latestEvent, prevEvent );
+
+
+						// STEP 5. Setup the DateValidation Message
+						me.setUpEventDateValidation( me.eventDateTag, $(".eventDateWarnMsg"), me.curEventDate );
+						
+
+						// STEP 6. Perform Event Date Validation
+						var dateValid = me.checkCurrentEventDate( me.eventDateTag.val(), me.curEventDate );
+						
+						me.disableEventBtn( me.formDisabled || !dateValid );
+
+
+						// STEP 7. New Event Case - if previous event exists, update the 'previous status' and 'days since previous status'
+						if ( me.caseType === "NEW" || me.caseType === "LATEST" ) 
+						{
+							if ( me.caseType === "NEW" )
+							{
+								me.setPreviousStatus( me.lastEvent, angular.element( me.previousStatusClassName ).scope().$select );
+							}
+
+							me.setDaysSincePrev( me.lastEvent, me.currentEvent );
+						}
+
+					}
+					else
+					{
+						// New First Event Case
+						me.caseType = "NEW";
+						me.disableEventBtn( false );
+					}
+					
+					me.afterLoadedInitData();
+
+					returnFunc();
+				}
+			}).done( function( data ) {
+				me.misSegStatusLogDivTag.show();
+			});
+		};
+	
+
+		me.getCaseType = function( currentEvent, latestEvent )
+		{
+			var caseType = "";
+
+			if ( currentEvent.event === "SINGLE_EVENT" ) caseType = "NEW";
+			else if ( currentEvent.event === latestEvent.event ) caseType = "LATEST";
+			else caseType = "OLD";
+
+			return caseType;
+		}
+
+	
+		me.getLastEvent = function( caseType, latestEvent, prevEvent )
+		{
+			var lastEvent;
+
+			if ( caseType === "NEW" ) lastEvent = latestEvent;
+			else if ( caseType === "LATEST" ) lastEvent = prevEvent;
+
+			return lastEvent;
+		}
+		
+		me.getCurEventDate = function( caseType, latestEvent, prevEvent )
+		{
+			var curEventDate = "";
+
+			// Get current event date
+			if ( caseType === "NEW" )
+			{
+				curEventDate = latestEvent.eventDate.substring( 0, 10 );
+			}
+			else if( caseType === "LATEST" && prevEvent !== undefined ) 
+			{
+				// In 'Update' case, get the date from 'prev' event, not latest event.
+				curEventDate = prevEvent.eventDate.substring( 0, 10 );
+			}
+
+			return curEventDate;
+		}
+			
+		me.setUpEventDateValidation = function( eventDateTag, eventDateWarnMsgTag, curEventDate )
+		{
+			eventDateTag.parent().find("span.eventDateWarnMsg").remove();
+			
+			eventDateTag.parent().append("<span class='eventDateWarnMsg' style='font-style: italic;color: red;'>Only allow a date on/after " + curEventDate + "</span>");
+
+			eventDateWarnMsgTag.hide();
+		}
+
+
+		me.setPreviousStatus = function( latestEvent, prevStatusSelectObj )
+		{
+			if ( latestEvent !== undefined )
+			{
+				me.selectByCode( prevStatusSelectObj, me.getStatusCode( latestEvent ) );
+			}
+		}
+
+		me.setDaysSincePrev = function( latestEvent, currentEvent )
+		{
+			if ( latestEvent !== undefined )
+			{
+				var latestEventDate = Util.getDate_FromYYYYMMDD( latestEvent.eventDate );
+
+				var currentEventDate = Util.getDate_FromYYYYMMDD( currentEvent.eventDate );
+
+				var dateDiff = Util.getDateDiff( currentEventDate, latestEventDate );
+
+				me.daysFromPreviousStatusInputTag.val( dateDiff ).change();
+			}
+		}
+
+
+
+		// ----------------
+		
+		me.afterLoadedInitData = function()
+		{
+			me.setUp_Events();
+			me.loadingDivTag.hide();
+			me.misSegStatusLogDivTag.show();
+			me.setReadOnlyOnes();
+		}
+
+		me.getStatusCode = function( event )
+		{
+			var statusCode = "";
+			if( event !== undefined )
+			{
+				var dataValues = event.dataValues;
+				for( var i in dataValues )
+				{
+					var dataValue = dataValues[i];
+					if( dataValue.dataElement == me.EVENT_DE_SEGMENTATION )
+					{
+						statusCode = dataValue.value;
+					}
+				}
+			}
+			
+			return statusCode;
+		};
+		
+		me.selectByCode = function( selectionObj, code )
+		{						
+			selectionObj.select( Util.findItemFromList( selectionObj.items, "code", code ) );
+		}
+
+
+		me.disableForm = function( disabled )
+		{
+			//angular.element("form").find("input,select,textarea").attr("disabled", disabled );
+
+			angular.element("form").find("input,select,textarea").not( me.previousStatusClassName + "," + me.daysSincePrevClassName ).attr("disabled", disabled );
+
+			var statusTag = angular.element( me.newStatusClassName );
+			statusTag.scope().$select.disabled = disabled;
+			if( disabled ) me.setUi_SelectDisable( statusTag );
+
+			// Disable Event Buttons if disabled. - Later, event date check will perform another check to disable the event button.
+			me.disableEventBtn( disabled );
+		};
+
+
+		me.setReadOnlyOnes = function()
+		{
+			// Always disable 'previousStatus' and 'daysSincePrev'
+			var prevStatusTag = angular.element( me.previousStatusClassName );
+			prevStatusTag.scope().$select.disabled = true;
+			me.setUi_SelectReadOnly( prevStatusTag );
+
+			var daysSinceTag = angular.element( me.daysSincePrevClassName ).attr("disabled", true );
+			me.setUi_InputDisable( daysSinceTag );			
+		}
+
+
+		me.setUi_SelectDisable = function( tag )
+		{
+			tag.find("a").css("background-color", "#f4f4f4");
+			tag.find("a").css("border", "1px solid #ddd");
+			tag.find("span.select2-arrow").find("b").css("background-color", "#ccc");
+			tag.find( "abbr" ).hide();
+		}
+
+		me.setUi_SelectReadOnly = function( tag )
+		{
+			tag.find( "a" ).css( "background-color", "White" );
+			tag.find( "a" ).css( "border", "none" );
+			tag.find( "span.select2-arrow" ).hide();
+			tag.find( "abbr" ).hide();
+
+			/*
+			var selectText = tag.find( "span.select2-chosen" ).text();
+
+			if ( selectText.indexOf( "Select or search from the list" ) >= 0 )  tag.find( "span.select2-chosen" ).text( "" );
+			*/
+		}
+
+		me.setUi_InputDisable = function( tag )
+		{
+			//tag.css("background-color", "#f4f4f4");
+			tag.css("border", "none");
+		}
+
+		
+		// -------------------------------------------------------------------------
+		// Save aggregate data in next 24 months
+		// -------------------------------------------------------------------------
+		
+		me.saveDataValuesAndUpdateOuGroups = function( type )
+		{
+
+			// STEP 1. Get the orgUnit Id of selected event
+			var ouId = me.currentEvent.orgUnit;
+			if( ouId == undefined )
+			{
+				ouId = angular.element($("#orgUnitTree .selected")).closest('li').attr('id').replace('orgUnit','');
+			}
+			
+
+			// STEP 2. Check for RollBack Prev Event Case (on jump months)
+			// If event's date is changed into future months
+			var prevRollBackCase = me.checkRollBackCase( type, me.latestEvent, me.eventDateTag.val() );
+			
+					
+			// STEP 3. Save aggregate data values and add the event orgUnit in to the orgUnit group
+			var curEventStatusName = me.currentEvent[me.EVENT_DE_SEGMENTATION];
+			var curEventStatusCode = ( curEventStatusName ) ? me.statusNameOptions[curEventStatusName] : "";
+
+
+			// STEP 4. Run the saving/updating - of dataValues and OU Groups
+			if ( prevRollBackCase )
+			{
+				// Run 'LastEvent' which is 'PrevEvent', and then, run 'CurrentEvent'
+				if ( me.lastEvent ) me.saveDataValuesAndUpdateOuGroups_Inner( me.lastEvent.eventDate, me.getStatusCode( me.lastEvent ), ouId );
+				
+				if ( curEventStatusCode ) me.saveDataValuesAndUpdateOuGroups_Inner( me.currentEvent.eventDate, curEventStatusCode, ouId );
+			}
+			else
+			{
+				// Run 'CurrentEvent'
+				if ( curEventStatusCode ) me.saveDataValuesAndUpdateOuGroups_Inner( me.currentEvent.eventDate, curEventStatusCode, ouId );
+			}
+		};
+		
+
+		me.checkRollBackCase = function( type, latestEvent, eventDateStr )
+		{
+			var rollBackCase = false; 
+
+			// Type is 'UPDATE' case and date has changed
+			// and changed date is future months (not past and current)
+			if ( type === "UPDATE" && me.latestEvent )
+			{				
+				var previousDateStr = me.latestEvent.eventDate.substring(0, 10);
+				var newDateStr = me.eventDateTag.val();
+			
+				if ( previousDateStr != newDateStr 
+					&& me.monthsDiff( newDateStr, previousDateStr ) >= 1 )
+				{
+					console.log( "RollBack TRUE Case, Months Diff: " + me.monthsDiff( newDateStr, previousDateStr ) + ", previousDateStr: " + previousDateStr + ", newDateStr: " + newDateStr );
+
+					rollBackCase = true;
+				}
+			}
+
+			return rollBackCase;
+		};
+
+
+		me.saveDataValuesAndUpdateOuGroups_Inner = function( eventDate, statusCode, ouId )
+		{
+			if ( statusCode )
+			{
+		
+				if( statusCode == "A" ){
+					me.saveStatusAData( eventDate, ouId );
+				}
+				else if( statusCode == "B" ){
+					me.saveStatusBData( eventDate, ouId );
+				}
+				else if( statusCode == "C" ){
+					me.saveStatusCData( eventDate, ouId );
+				}
+				else if( statusCode == "D" ){
+					me.saveStatusDData( eventDate, ouId );
+				}
+				else if( statusCode == "UNK" ){ // "Unknown"
+					me.saveStatusUnknownData( eventDate, ouId );
+				}
+				
+				var eventDate1 = eventDate.substring( 0, 19 ) ;
+				
+				// Save "Sticky Status - Segmentation - last change"
+				me.saveStatusDataValue( eventDate1, me.AGG_DE_SEGMENTATION_DATE_LAST_CHANGE, ouId, eventDate1 );
+				
+				// Save "Sticky Status - Segmentation - updated this month", 
+				//      "Sticky Status - Segmentation - Months since last update"
+				me.saveMonthInfoData( eventDate1, ouId );
+			}
+		}
+
+		
+		// Save status data values, includes :
+		//		Sticky Status - Segmentation A
+		//		Sticky Status - Segmentation B
+		//		Sticky Status - Segmentation C
+		//		Sticky Status - Segmentation D
+		//		Sticky Status - Segmentation Unknown
+		me.saveStatusDataValue = function( eventDate, deId, ouId, value )
+		{
+			var json_structuredList = [];
+			var curPeriod = me.generateEventPeriod( eventDate );
+			for ( i = 0; i < 24; i++ )
+			{
+				var peId = me.getAddedMonthStr( curPeriod, i );
+				var dataValue = me.getDataValueJson( deId, peId, ouId, value );
+				json_structuredList.push( dataValue );
+			}
+			
+			me.submitDataValueSet( json_structuredList );
+		};
+		
+		// Save data values, includes :
+		//		Sticky Status - Segmentation - updated this month
+		//		Sticky Status - Segmentation - Months since last update 
+		me.saveMonthInfoData = function( eventDate, ouId )
+		{
+
+			var json_structuredList = [];
+			var curPeriod = me.generateEventPeriod( eventDate );
+
+			for ( i = 0; i < 24; i++ )
+			{
+				// Generate period
+				var peId = me.getAddedMonthStr( curPeriod, i );
+				
+				
+				// ----------------------------------------------------------------
+				// Save the "Network update this month" value
+				
+				//Generate value
+				var value = "0";
+				if( me.checkIfEventDateInCurPeriod( eventDate, peId ) )
+				{
+					value = "1";
+				}
+								
+				var dataValue1 = me.getDataValueJson( me.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH, peId, ouId, value );
+				json_structuredList.push( dataValue1 );
+				
+				
+				// ----------------------------------------------------------------
+				// STEP 2. Save the "Months since last update" value
+				
+				value = me.generateMonthSinceDate( eventDate, peId );
+				var dataValue2 = me.getDataValueJson( me.AGG_DE_SEGMENTATION_MONTHS_SINCE_LAST_UPDATE, peId, ouId, value );
+				json_structuredList.push( dataValue2 );
+			}
+			
+			me.submitDataValueSet( json_structuredList );
+		};
+		
+				
+		me.submitDataValueSet = function( jsonData )
+		{
+			var jsonList = { "dataValues" : jsonData };
+			
+			return $.ajax({
+				type: 'POST'
+				,url: me._queryUrl_dataValueSet
+				,dataType: "json"
+				,data: JSON.stringify( jsonList )
+				,headers: {
+					'Content-Type': 'application/json'
+				}
+				,success: function(){
+					console.log( 'Bulk DataValues Submitted. ' );	
+				}
+				,error: function(){
+					console.log( 'Bulk DataValues Submit Failed' );	
+				}
+			});
+		};
+
+		me.getDataValueJson = function( de, pe, ou, value )
+		{
+			return {
+				'dataElement' : de,
+				'categoryoptioncombo' : 'CQ6ibh5Ggda',
+				'orgUnit' : ou,
+				'period' : pe,
+				'value' : value
+			}
+		};
+		
+		
+		me.saveStatusAData = function( eventDate, ouId )
+		{
+			// Data Values
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_A, ouId, "1" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_B, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_C, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_D, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_UNKNOWN, ouId, "0" );
+		};
+		
+		me.saveStatusBData = function( eventDate, ouId )
+		{
+			// Data Values
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_A, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_B, ouId, "1" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_C, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_D, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_UNKNOWN, ouId, "0" );
+		};
+		
+		me.saveStatusCData = function( eventDate, ouId )
+		{
+			// Data Values
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_A, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_B, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_C, ouId, "1" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_D, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_UNKNOWN, ouId, "0" );
+		};
+		
+		me.saveStatusDData = function( eventDate, ouId )
+		{
+			// Data Values
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_A, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_B, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_C, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_D, ouId, "1" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_UNKNOWN, ouId, "0" );
+		};
+		
+		me.saveStatusUnknownData = function( eventDate, ouId )
+		{
+			// Data Values
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_A, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_B, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_C, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_D, ouId, "0" );
+			me.saveStatusDataValue( eventDate, me.AGG_DE_SEGMENTATION_UNKNOWN, ouId, "1" );
+		};
+		
+		// -------------------------------------------------------------------------
+		// Check and generate Data Values
+		// -------------------------------------------------------------------------
+				
+		// Check data
+		me.checkIfEventDateInCurPeriod = function( eventDate, period )
+		{
+			var eventPeriod = me.generateEventPeriod( eventDate );
+			return ( eventPeriod === period );
+		};
+		
+		// 	Calculate the number of months between eventDate and a period
+		me.generateMonthSinceDate = function( date, period )
+		{
+			var year1 = eval( date.substring(0,4) );
+			var year2 = eval( period.substring(0,4) );
+			
+			var month1 = eval( date.substring(5,7) );
+			var month2 = eval( period.substring(4,6) );
+			
+			return ( (year2 - year1) * 12 + (month2 - month1) );
+		};
+		
+		// -------------------------------------------------------------------------
+		// Periods
+		// -------------------------------------------------------------------------
+		
+		me.generateEventPeriod = function( eventDate )
+		{
+			var year = eventDate.substring(0, 4);
+			var month = eventDate.substring(5, 7);
+			
+			return year + month;
+		};
+		
+		me.getAddedMonthStr = function( selectedPeriod, i )
+		{
+			var dateTemp = Util.getDate_FromYYYYMM( selectedPeriod );
+
+			dateTemp.setMonth( dateTemp.getMonth() + i );
+
+			return Util.getDateStringYYYYMM( dateTemp );
+		};
+
+
+		// -------------------------------------------------------------------------
+		// RUN init method
+		// -------------------------------------------------------------------------
+		
+		me.init();
+	}
+	
+	
+	// -------------------------------------------------------------------------
+	// Periods
+	// -------------------------------------------------------------------------
+		
+	function Util() {}
+	
+	Util.getDate_FromYYYYMM = function( strDate )
+	{
+		var date;
+
+		if ( Util.checkValue( strDate ) )
+		{
+			var year = strDate.substring(0, 4);
+			var month = strDate.substring(4, 6);
+
+			date = new Date( year, month - 1 );
+		}
+
+		return date;
+	};
+
+	Util.getDate_FromYYYYMMDD = function( strDate )
+	{
+		var date;
+
+		if ( Util.checkValue( strDate ) )
+		{
+			var year = strDate.substring(0, 4);
+			var month = strDate.substring(5, 7);
+			var date = strDate.substring(8, 10);
+
+			date = new Date( year, month - 1, date );
+		}
+
+		return date;
+	}
+	
+	Util.getDateStringYYYYMM = function( date, inBtw, dateOption )
+	{
+		var returnVal = "";
+
+		if ( inBtw === undefined) inBtw = "";
+
+
+		var yyyy = date.getFullYear().toString();
+		var mm = ( date.getMonth() + 1 ).toString(); // getMonth() is zero-based
+
+		returnVal = yyyy + inBtw + ( mm[1] ? mm : "0" + mm[0] );		
+
+		if ( dateOption !== undefined && dateOption == "DD" )
+		{
+			var dd  = date.getDate().toString();
+			returnVal = returnVal + inBtw + ( dd[1] ? dd : "0" + dd[0] );
+		}
+
+		return returnVal;
+	};
+		
+	Util.getDateDiff = function( futureDate, pastDate )
+	{
+		var timeDiff = Math.abs( futureDate.getTime() - pastDate.getTime() );
+
+		return Math.ceil( timeDiff / ( 1000 * 3600 * 24 ) );
+	}
+
+
+	Util.convertStrToDate = function( dateStr )
+	{
+		var year = dateStr.substring( 0, 4 );
+		var month = eval( dateStr.substring( 5,7 ) ) - 1;
+		var day = dateStr.substring( 8,10 );
+		
+		return new Date( year, month, day );
+	};
+	
+	
+	Util.checkDefined = function( input ) {
+
+		if( input !== undefined && input != null ) return true;
+		else return false;
+	};
+
+	Util.checkValue = function( input ) {
+
+		if ( Util.checkDefined( input ) && input.length > 0 ) return true;
+		else return false;
+	};
+		
+	Util.removeItemFromList = function( listData, searchProperty, searchValue )
+	{
+		$.each( listData, function( i, item )
+		{
+			if ( item[ searchProperty ] == searchValue )
+			{
+				listData.splice(i, 1);
+				return false;
+			}
+		});
+	};
+	
+
+	Util.findItemFromList = function( listData, searchProperty, searchValue )
+	{
+		var foundData;
+
+		$.each( listData, function( i, item )
+		{
+			if ( item[ searchProperty ] == searchValue )
+			{
+				foundData = item;
+				return false;
+			}
+		});
+
+		return foundData;
+	};
+
+
+	Util.disableTag = function( tag, isDisable )
+	{
+		tag.prop( 'disabled', isDisable);
+		
+		for( var i=0; i<tag.length; i++ )
+		{
+			var element = $(tag[i]);
+			if( element.prop( "tagName" ) == 'SELECT' || element.prop( "tagName" ) == 'INPUT' )
+			{
+				if( isDisable )
+				{
+					element.css( 'background-color', '#FAFAFA' ).css( 'cursor', 'auto' ).css( 'color', '#444' );
+				}
+				else
+				{
+					element.css( 'background-color', 'white' ).css( 'cursor', '' );
+				}
+			}
+		}
+	};
+
+	
+</script></div>
