@@ -90,7 +90,7 @@ function UpdateStickyDataValue()
 			,success: function( jsonData ) 
 			{
 				var username = jsonData.userCredentials.username;
-				if( username == 'rmelia' || username == 'jamesc'  || username == 'tranc' )
+				if( username == 'david.palmer@mariestopes.org' || username == 'vilde.aagenaes' || username == 'rmelia' || username == 'jamesc'  || username == 'tranc' )
 				{
 					me.settingsBtnTag.show();
 				}
