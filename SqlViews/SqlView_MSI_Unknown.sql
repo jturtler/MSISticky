@@ -16,7 +16,7 @@ from datavalue as dv
 where de.uid = '${unknowndeid}'
  AND p.startdate = to_date( '${startDate}', 'YYYY-MM-DD' )
  AND ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )
-
+ AND dv.deleted = false
 -- ABOVE: Aggregate data - with 'unknown' status and 'program relationship' - values: 0, 1, ''
 
 UNION ALL
