@@ -20,8 +20,10 @@
 
 var urlsync = require('urllib-sync');
 var fs = require('fs');
-var settingObj = JSON.parse(fs.readFileSync('setting.txt', 'utf8'));
-eval( urlsync.request( settingObj.jsFile ).data.toString( 'utf8' )+'' );
+var settingLoc = '/tmp/nodejs/setting.txt';
+var settingLoc2 = 'setting.txt';
+var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
+eval( urlsync.request( settingObj.jsFile, {timeout: 600000} ).data.toString( 'utf8' )+'' );
 
 RESTUtil.options = { auth: settingObj.dhis.user + ':' + settingObj.dhis.password, timeout: 600000 };
 RESTUtil.encoding = 'utf8';
@@ -39,7 +41,7 @@ var _ouid = ( _argvSetObj[ "ouid" ] !== undefined ) ? _argvSetObj[ "ouid" ] : "A
 // ----- Show Logs & Override Var -----------
 // level 0: display error message, level 1: display step message and process message, level 2: more detailed
 var _logLevel = ( _argvSetObj[ "logLevel" ] !== undefined ) ? Number( _argvSetObj[ "logLevel" ] ) : 0;
-var _startDate;
+var _startDate = "ALL";
 
 // ----- UIDs and Urls -----------
 var _apiUrl = _serverUrl + "/api/";
@@ -151,6 +153,9 @@ app.getStructuredList_JsonData = function( jsonSqlViewData )
 			,'status': data[6]
 			,'elapsDate': data[7]  // <-- this probably needs to be calculated??
 			,'noteData': data[8]
+
+			,'prevSubSts': data[9]		// <-- what about this?  needs to be added..
+			,'subStatus': data[10]			
 		} );
 	}
 
@@ -274,9 +279,15 @@ app.resetPrevRelatedData = function( eventList )
 		var eventData = eventList[i];
 
 		eventData.prevSts = "";
+		eventData.prevSubSts = "";
 		eventData.elapsDate = "";
 	}
 };
+
+
+// TODO: USE
+//var statusCode = EventDataUtil.getStatusCodeFromSubStatus( subStatusCode );	
+
 
 app.updatePrevRelatedData = function( eventList )
 {
@@ -289,11 +300,13 @@ app.updatePrevRelatedData = function( eventList )
 			var prevEventData = eventList[i-1];
 
 			eventData.prevSts = prevEventData.status;
-
+			eventData.prevSubSts = prevEventData.subStatus;
+			
 			eventData.elapsDate = Util.getDateDiffStr_FromStr( eventData.eventDate, prevEventData.eventDate );
 
 			var updateDeList = [];
 			updateDeList.push( { "deId": M_UID.EVENT_DE_SEGMENTATION_PREVIOUS, "value": eventData.prevSts } );
+			updateDeList.push( { "deId": M_UID.EVENT_DE_SEGMENTATION_SUB_PREVIOUS, "value": eventData.prevSubSts } );
 			updateDeList.push( { "deId": M_UID.EVENT_DE_DAYS_IN_PREV, "value": eventData.elapsDate } );
 
 			EventDataUtil.updateEventDataValue( eventData.eventId, _apiUrl, updateDeList );	
@@ -310,17 +323,28 @@ app.submitDataToAggr = function( dataJson )
 	var ouId = dataJson.ouId;
 	var eventDate = dataJson.eventDate.substring(0, 10);
 	var sts = dataJson.status;
-
+	var subSts = dataJson.subStatus;
+	
 	// Add Aggr Data 24 periods
 	var deListObj = {};
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_UNKNOWN ] = "0";
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_A ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_A);
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_B ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_B);
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_C ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_C);
-	deListObj[ M_UID.AGG_DE_SEGMENTATION_D ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_D);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_D ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_D);	
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_DISENFRANCHISE);
 
-	AggrDataUtil.addData24Pe( deListObj, ouId, period, _apiUrl, 'Add Aggr Data over 24 periods(C1), event(' + dataJson.eventId + ')', function() { 
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_A1 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_A1);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_B1 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_B1);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_B2 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_B2);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_C1 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_C1);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_C2 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_C2);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_D1 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_D1);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_D2 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_D2);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_D3 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_D3);
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_D4 ] = Util.get10_Bool(subSts === M_UID.SEGMENTATION_CODE_D4);
+	
+	AggrDataUtil.addData24Pe( deListObj, ouId, period, _apiUrl, 'Add Aggr Data over ' + G_VAR.numMonthsCopy + ' periods(C1), event(' + dataJson.eventId + ')', function() { 
 	}
 	, function() { 
 		_foundFailedCase = true; 
@@ -329,20 +353,20 @@ app.submitDataToAggr = function( dataJson )
 	// Do this in separate process - so that the content is not too long..
 	periodListDataObj = {};
 
-	for ( i = 0; i < 24; i++ )
+	for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
 	{
 		var pe = Util.generateNextPeriodCode( period, i );
 
 		var periodDataObj = {};
 
-		periodDataObj[ M_UID.AGG_DE_SEGMENTATION_LAST_CHANGE ] = eventDate;
+		periodDataObj[ M_UID.AGG_DE_SEGMENTATION_DATE_LAST_CHANGE ] = eventDate;
 		periodDataObj[ M_UID.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH ] = Util.get10_Bool(i == 0);
 		periodDataObj[ M_UID.AGG_DE_SEGMENTATION_MONTHS_SINCE_LAST_UPDATE ] = i;
 
 		periodListDataObj[ pe ] = periodDataObj;
 	}
 
-	AggrDataUtil.addData_withPeDataList( periodListDataObj, ouId, _apiUrl, 'Add Aggr Data over 24 periods(C2), event(' + dataJson.eventId + ')', function() { 		
+	AggrDataUtil.addData_withPeDataList( periodListDataObj, ouId, _apiUrl, 'Add Aggr Data over ' + G_VAR.numMonthsCopy + ' periods(C2), event(' + dataJson.eventId + ')', function() { 		
 	}
 	, function() { 
 		_foundFailedCase = true; 
@@ -360,6 +384,16 @@ app.deleteDataValueSet = function( orgUnitId, afterDelFunc )
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_B ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_C ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_D ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_A1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_B1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_B2 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_C1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_C2 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D2 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D3 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D4 ] = "0";
+			
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_DATE_LAST_CHANGE ] = "2017-01-01";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH ] = "0";

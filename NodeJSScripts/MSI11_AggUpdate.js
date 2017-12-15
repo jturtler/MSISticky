@@ -20,8 +20,10 @@
 
 var urlsync = require('urllib-sync');
 var fs = require('fs');
-var settingObj = JSON.parse(fs.readFileSync('setting.txt', 'utf8'));
-eval( urlsync.request( settingObj.jsFile ).data.toString( 'utf8' )+'' );
+var settingLoc = '/tmp/nodejs/setting.txt';
+var settingLoc2 = 'setting.txt';
+var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
+eval( urlsync.request( settingObj.jsFile, {timeout: 600000} ).data.toString( 'utf8' )+'' );
 
 RESTUtil.options = { auth: settingObj.dhis.user + ':' + settingObj.dhis.password, timeout: 600000 };
 RESTUtil.encoding = 'utf8';
@@ -39,7 +41,7 @@ var _ouid = ( _argvSetObj[ "ouid" ] !== undefined ) ? _argvSetObj[ "ouid" ] : "A
 // ----- Show Logs & Override Var -----------
 // level 0: display error message, level 1: display step message and process message, level 2: more detailed
 var _logLevel = ( _argvSetObj[ "logLevel" ] !== undefined ) ? Number( _argvSetObj[ "logLevel" ] ) : 0;
-var _startDate;
+var _startDate = "ALL";
 
 // ----- UIDs and Urls -----------
 var _apiUrl = _serverUrl + "/api/";
@@ -237,10 +239,6 @@ app.process_AggUpdate = function( eventList_byOU )
 				var ouEventList = eventList_byOU[ ouId ];
 				var ouEventList_sorted = Util.sortByKey( ouEventList, "eventDate" );
 
-				var event_LastUnderContract = Util.getLastEvent_InStatus( ouEventList_sorted, M_UID.STATUS_CODE_UnderContract  );
-				var event_LastOnBoarding = Util.getLastEvent_InStatus( ouEventList_sorted, M_UID.STATUS_CODE_OnBoarding  );
-				var event_LastSuspended = Util.getLastEvent_InStatus( ouEventList_sorted, M_UID.STATUS_CODE_Suspended  );
-
 				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>-- Aggr Update OrgUnit Id ' + ouId + ', eventCount: ' + ouEventList_sorted.length );
 
 				// STEP 1. go throw event list and submit to aggregate side.
@@ -249,7 +247,8 @@ app.process_AggUpdate = function( eventList_byOU )
 					try
 					{
 						var eventData = ouEventList_sorted[i];
-						app.submitDataToAggr( eventData, event_LastUnderContract, event_LastOnBoarding, event_LastSuspended );
+						//app.submitDataToAggr( eventData, event_LastUnderContract, event_LastOnBoarding, event_LastSuspended );
+						app.submitDataToAggr( eventData );
 					}
 					catch ( ex )
 					{
@@ -304,7 +303,7 @@ app.updatePrevRelatedData = function( eventList )
 };
 
 // -------------------------------------------------
-app.submitDataToAggr = function( dataJson, event_LastUnderContract, event_LastOnBoarding, event_LastSuspended )
+app.submitDataToAggr = function( dataJson )
 {
 	var jsonData = [];
 
@@ -313,12 +312,8 @@ app.submitDataToAggr = function( dataJson, event_LastUnderContract, event_LastOn
 	var eventDate = dataJson.eventDate.substring(0, 10);
 	var sts = dataJson.status;
 
-	var lastEventDate_UnderContract = ( event_LastUnderContract ) ? event_LastUnderContract.eventDate.substring(0, 10) : "";
-	var lastEventDate_OnBoarding = ( event_LastOnBoarding ) ? event_LastOnBoarding.eventDate.substring(0, 10) : "";
-	var lastEventDate_Suspended = ( event_LastSuspended ) ? event_LastSuspended.eventDate.substring(0, 10) : "";
 
-
-	// Add Aggr Data 24 periods
+	// 1. Add Aggr Data G_VAR.numMonthsCopy periods
 	var deListObj = {};
 	deListObj[ M_UID.AGG_DE_FRANCHISEE_UNKNOWN ] = "0";
 	deListObj[ M_UID.AGG_DE_FRANCHISEE_ON_BOARDING ] = Util.get10_Bool(sts === M_UID.STATUS_CODE_OnBoarding);
@@ -328,37 +323,77 @@ app.submitDataToAggr = function( dataJson, event_LastUnderContract, event_LastOn
 	deListObj[ M_UID.AGG_DE_NETWORK_INCLUDED ] = Util.get10_Bool(sts === M_UID.STATUS_CODE_UnderContract);
 	deListObj[ M_UID.AGG_DE_NETWORK_EXCLUDED ] = Util.get10_Bool(sts !== M_UID.STATUS_CODE_UnderContract);
 
-	AggrDataUtil.addData24Pe( deListObj, ouId, period, _apiUrl, 'Add Aggr Data over 24 periods(C1), event(' + dataJson.eventId + ')', function() { 
+	AggrDataUtil.addData24Pe( deListObj, ouId, period, _apiUrl, 'Add Aggr Data over ' + G_VAR.numMonthsCopy + ' periods(C1), event(' + dataJson.eventId + ')', function() { 
 	}
 	, function() { _foundFailedCase = true; } 
 	);
 
-	// Do this in separate process - so that the content is not too long..
+
+	// 2. Remove MonthsSince related
+	var deUid_monthsSince = app.getMonthsSinceUid_FromStatusCode( sts );	
+	app.monthsSince_Dels( deUid_monthsSince, ouId, eventDate );
+	
+
+	// 3. Insert Data
 	periodListDataObj = {};
 
-	for ( i = 0; i < 24; i++ )
+	for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
 	{
 		var pe = Util.generateNextPeriodCode( period, i );
 
 		var periodDataObj = {};
 
-		periodDataObj[ M_UID.AGG_DE_MONTHS_SINCE_JOINING_NETWORK ] = ( lastEventDate_UnderContract ) ? Util.generateMonthSinceDate( lastEventDate_UnderContract, pe ) : "";
-		periodDataObj[ M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ] = ( lastEventDate_OnBoarding ) ? Util.generateMonthSinceDate( lastEventDate_UnderContract, pe ) : "";
-		periodDataObj[ M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ] = ( lastEventDate_Suspended ) ? Util.generateMonthSinceDate( lastEventDate_UnderContract, pe ) : "";
+		periodDataObj[ deUid_monthsSince ] = i + '';
 
 		periodDataObj[ M_UID.AGG_DE_STATUS_LAST_CHANGE ] = eventDate;
 		periodDataObj[ M_UID.AGG_DE_STATUS_UPDATE_THIS_MONTH ] = Util.get10_Bool(i == 0);
-		periodDataObj[ M_UID.AGG_DE_STATUS_MONTHS_SINCE_LAST_UPDATE ] = i;
+		periodDataObj[ M_UID.AGG_DE_STATUS_MONTHS_SINCE_LAST_UPDATE ] = i + '';
 
 		periodListDataObj[ pe ] = periodDataObj;
 	}
 
-	AggrDataUtil.addData_withPeDataList( periodListDataObj, ouId, _apiUrl, 'Add Aggr Data over 24 periods(C2), event(' + dataJson.eventId + ')', function() { 		
+	AggrDataUtil.addData_withPeDataList( periodListDataObj, ouId, _apiUrl, 'Add Aggr Data over ' + G_VAR.numMonthsCopy + ' periods(C2), event(' + dataJson.eventId + ')', function() { 		
 	}
 	, function() { _foundFailedCase = true; } 
 	);
 };
 
+
+app.getMonthsSinceUid_FromStatusCode = function( currStatusCode )
+{
+	var deUid_monthsSince = "";
+	if ( currStatusCode === M_UID.STATUS_CODE_UnderContract ) deUid_monthsSince = M_UID.AGG_DE_MONTHS_SINCE_JOINING_NETWORK;
+	else if ( currStatusCode === M_UID.STATUS_CODE_OnBoarding ) deUid_monthsSince = M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING;
+	else if ( currStatusCode === M_UID.STATUS_CODE_Suspended ) deUid_monthsSince = M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED;
+
+	return deUid_monthsSince;
+}
+
+app.monthsSince_Dels = function( deUid_monthsSince, ouId, eventDate )
+{
+	var prevMonthDateStr = Util.dateStrMonthChange( eventDate, -1 );
+	
+	// 1. Delete Other months since 
+	var deListObj_others = {};
+	
+	if ( deUid_monthsSince !== M_UID.AGG_DE_MONTHS_SINCE_JOINING_NETWORK ) deListObj_others[ M_UID.AGG_DE_MONTHS_SINCE_JOINING_NETWORK ] = "0";
+	if ( deUid_monthsSince !== M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ) deListObj_others[ M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ] = "0";
+	if ( deUid_monthsSince !== M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ) deListObj_others[ M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ] = "0";
+
+	// THIS IS SYNC SUBMIT...
+	AggrDataUtil.deleteDataBySearchDe_WithEndDate( undefined, deListObj_others, ouId, eventDate, 'ALL', M_UID.AGG_DE_FRANCHISEE_ON_BOARDING, _apiUrl, "Remove other months since future periods" );	
+
+
+	// 2. Remove/Add for current status months since dataValues
+	if ( deUid_monthsSince )
+	{
+		var deListObj = {};
+		deListObj[ deUid_monthsSince ] = "0";
+
+		// 2A. Delete the data (monthsSince) on previous periods
+		AggrDataUtil.deleteDataBySearchDe_WithEndDate( undefined, deListObj, ouId, 'ALL', prevMonthDateStr, M_UID.AGG_DE_FRANCHISEE_ON_BOARDING, _apiUrl, "Remove previous periods monthsSince case" );
+	}
+}
 
 app.deleteDataValueSet = function( orgUnitId, afterDelFunc )
 {

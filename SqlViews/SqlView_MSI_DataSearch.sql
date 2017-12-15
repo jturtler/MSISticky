@@ -1,4 +1,4 @@
-select p.startdate
+select p.startdate, p.enddate
 from datavalue as dv
   inner join organisationunit as ou
     on dv.sourceid = ou.organisationunitid
@@ -9,5 +9,6 @@ from datavalue as dv
 where ou.uid = '${ouid}'
 and de.uid = '${deid}'
 and deleted = false
-and ( '${startDate}' = 'ALL' OR p.startdate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) 
+and ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) 
+and ( '${endDate}' = 'ALL' OR p.startdate <= to_date( '${endDate}', 'YYYY-MM-DD' ) ) 
 order by p.startdate;

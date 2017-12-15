@@ -1,7 +1,5 @@
 <div id="loadingDiv"><img src="../images/ajax-loader-circle.gif" /></div>
-
-<style>
-	.formCtrlReadOnly
+<style type="text/css">.formCtrlReadOnly
 	{
 		border: 0;
 		font-style: italic;
@@ -13,16 +11,14 @@
 		width: 100%;
 	}
 </style>
-
 <div id="misStatusLogDiv">
-
 <table width="100%">
-	<tr>
-		<td><strong>MSI Status Log</strong></td>
-		<td align="right">
-			<a href="https://docs.google.com/document/d/1s8IFPCOeRfTsOO1DMwgDKO95V1pBsZykPUU9do71spc" title="version doc" target="_blank" style="color: #276696">v 0.53</a>
-		</td>
-	</tr>
+	<tbody>
+		<tr>
+			<td><strong>MSI Status Log</strong></td>
+			<td align="right"><a href="https://docs.google.com/document/d/1cjojtR9W40zJSNuXkeUXsi21jLPwmAPSozNZoDwtWIE" style="color: #276696" target="_blank" title="version doc">v 1.02</a></td>
+		</tr>
+	</tbody>
 </table>
 
 <div style="display: flex;justify-content: center;">
@@ -30,24 +26,23 @@
 	<tbody>
 		<tr>
 			<td style="width: 35%"><label>Previous Status</label></td>
-			<td><input id="qofz8VA3rt4-k95lcIlS4bv-val" class="previousStatus formCtrlReadOnly" name="entryfield" title="k95lcIlS4bv - Log - Previous status - undefined" value="[Log - Previous status]" /></td>
+			<td><input class="previousStatus formCtrlReadOnly" id="qofz8VA3rt4-k95lcIlS4bv-val" name="entryfield" title="[ k95lcIlS4bv - Log - Previous status - TEXT ]" value="[Log - Previous status]" /></td>
 		</tr>
 		<tr>
 			<td><label>New Status</label></td>
-			<td><input id="qofz8VA3rt4-XhFcLwoD1Dr-val" class="newStatus" name="entryfield" title="[ XhFcLwoD1Dr - Log - New status - TEXT ]" value="[Log - New status]" /></td>
+			<td><input class="newStatus" id="qofz8VA3rt4-XhFcLwoD1Dr-val" name="entryfield" title="[ XhFcLwoD1Dr - Log - New status - TEXT ]" value="[Log - New status]" /></td>
 		</tr>
 		<tr>
 			<td><label>Days Elasped Since Previous Status</label></td>
-			<td><input id="qofz8VA3rt4-UrD7yr6JLEf-val" class="daysSincePrev formCtrlReadOnly" name="entryfield" title="UrD7yr6JLEf - Log - days elapsed from previous status - undefined" value="[Log - days elapsed from previous status]" /></td>
-		</tr>		
+			<td><input class="daysSincePrev formCtrlReadOnly" id="qofz8VA3rt4-UrD7yr6JLEf-val" name="entryfield" title="[ UrD7yr6JLEf - Log - days elapsed from previous status - NUMBER ]" value="[Log - days elapsed from previous status]" /></td>
+		</tr>
 		<tr>
 			<td><label>Comments</label></td>
-			<td><input class="noteComment" id="qofz8VA3rt4-Yww3Z8MYo1e-val" name="entryfield" title="Yww3Z8MYo1e - Log - Notes - undefined" value="[Log - Notes]" /></td>
+			<td><input class="noteComment" id="qofz8VA3rt4-Yww3Z8MYo1e-val" name="entryfield" title="[ Yww3Z8MYo1e - Log - Notes - LONG_TEXT ]" value="[Log - Notes]" /></td>
 		</tr>
 	</tbody>
 </table>
 </div>
-
 <script>
 
 	jQuery( document ).ready( function() {
@@ -55,7 +50,10 @@
 		var _logLevel = 0;
 		var _logText = "";
 
+        //var url_js_StickyUtil = "http://localhost:8080/js/js_StickyUtil.js";
+        
 		var url_js_StickyUtil = "https://sandbox.orion.mariestopes.org/js/js_StickyUtil.js";
+		
 		$.getScript( url_js_StickyUtil, function() {
 
 			var segObj = new MISSegLog();
@@ -65,5 +63,4 @@
 		});
 	});
 
-</script>
-</div>
+</script></div>

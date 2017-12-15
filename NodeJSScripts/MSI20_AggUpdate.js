@@ -30,8 +30,10 @@
 
 var urlsync = require('urllib-sync');
 var fs = require('fs');
-var settingObj = JSON.parse(fs.readFileSync('setting.txt', 'utf8'));
-eval( urlsync.request( settingObj.jsFile ).data.toString( 'utf8' )+'' );
+var settingLoc = '/tmp/nodejs/setting.txt';
+var settingLoc2 = 'setting.txt';
+var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
+eval( urlsync.request( settingObj.jsFile, {timeout: 600000} ).data.toString( 'utf8' )+'' );
 
 RESTUtil.options = { auth: settingObj.dhis.user + ':' + settingObj.dhis.password, timeout: 600000 };
 RESTUtil.encoding = 'utf8';
@@ -77,6 +79,10 @@ var _logText = "";	// collect the console log data and use it to output in Log P
 var _foundFailedCase = false;
 
 var _scriptName = "MSI20_AggUpdate.js";
+
+var _name_UNK = "UNK"; // Unknown Status Code
+var _name_YES =  "YES";
+var _name_NO = "NO";
 
 // ---------------------------------------------------
 // --------------- App Run Method --------------------
@@ -304,6 +310,7 @@ app.process_AggUpdate = function( eventList_byOU, programData )
 	}			
 };
 
+
 app.submitDataToAggr = function( dataJson, programData )
 {
 	var jsonData = [];
@@ -312,9 +319,9 @@ app.submitDataToAggr = function( dataJson, programData )
 
 	var status = dataJson.statusVal;
 
-	var unknownVal = ( status == "UNK" ) ? "1" : "0";
-	var yesVal = ( status == "YES" ) ? "1" : "0";
-	var noVal = ( status == "NO" ) ? "1" : "0";
+	var unknownVal = ( status == _name_UNK ) ? "1" : "0";
+	var yesVal = ( status == _name_YES ) ? "1" : "0";
+	var noVal = ( status == _name_NO ) ? "1" : "0";
 		
 	// Generate startPeriod and endPeriod
 	var eventDate = dataJson.eventDate.substring(0, 10);
@@ -332,7 +339,7 @@ app.submitDataToAggr = function( dataJson, programData )
 	// Only generate aggregate data values from eventDate to expireDate
 	var idx = 0;
 	while ( 
-		( fixed24Case && idx < 24 ) 
+		( fixed24Case && idx < G_VAR.numMonthsCopy ) 
 		|| ( !fixed24Case && pe <= endPeriod ) )
 	{
 		var periodDataObj = {};
@@ -352,7 +359,9 @@ app.submitDataToAggr = function( dataJson, programData )
 		pe = Util.generateNextPeriodCode( period, idx );
 	}
 
-	AggrDataUtil.addData_withPeDataList( periodListDataObj, ouId, _apiUrl, 'Add Aggr Data over periods, event(' + dataJson.eventId + ')', function() { 		
+	AggrDataUtil.addData_withPeDataList( periodListDataObj, ouId, _apiUrl, 'Add Aggr Data over periods, event(' + dataJson.eventId + ')'
+	, function() {
+		// console.log( 'periodListDataObj:' + JSON.stringify( periodListDataObj) );
 	}
 	, function() { _foundFailedCase = true; } 
 	);
@@ -382,8 +391,6 @@ app.deleteDataValueSet = function( orgUnitId, programData, afterDelFunc )
 			_foundFailedCase = true;
 			afterDelFunc( false );
 		} );
-
-
 	}
 	catch( ex )
 	{

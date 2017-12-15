@@ -3,8 +3,10 @@
 
 var urlsync = require('urllib-sync');
 var fs = require('fs');
-var settingObj = JSON.parse(fs.readFileSync('setting.txt', 'utf8'));
-eval( urlsync.request( settingObj.jsFile ).data.toString( 'utf8' )+'' );
+var settingLoc = '/tmp/nodejs/setting.txt';
+var settingLoc2 = 'setting.txt';
+var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
+eval( urlsync.request( settingObj.jsFile, {timeout: 600000} ).data.toString( 'utf8' )+'' );
 
 RESTUtil.options = { auth: settingObj.dhis.user + ':' + settingObj.dhis.password, timeout: 600000 };
 RESTUtil.encoding = 'utf8';
@@ -52,6 +54,10 @@ var _logText = "";	// collect the console log data and use it to output in Log P
 var _foundFailedCase = false;
 
 var _scriptName = "MSI20_Unknown.js";
+
+var _name_unknown = "unknown";
+var _name_notInProgram =  "notInProgram";
+var _name_Compare = "Compare";
 
 // ---------------------------------------------------
 // --------------- App Run Method --------------------
@@ -230,18 +236,18 @@ app.getStructuredList_JsonData = function( jsonSqlViewData )
 		if ( jsonData.type === "aggr" )
 		{
 			// 0, 1, ""
-			if ( jsonData.value === "1" ) jsonData.value = "unknown";
+			if ( jsonData.value === "1" ) jsonData.value = _name_unknown;
 			else if ( jsonData.value === "0" ) jsonData.value = "known";
 			else if ( jsonData.value === "" ) jsonData.value = "noData";
 
-			if ( jsonData.prgrel === "" ) jsonData.prgrel = "notInProgram";
+			if ( jsonData.prgrel === "" ) jsonData.prgrel = _name_notInProgram;
 			else jsonData.prgrel = "inProgram";
 
 			json_structuredList.aggr.push( jsonData );
 		}
 		else if ( jsonData.type === "event" )
 		{
-			if ( jsonData.value === "0" ) jsonData.value = "unknown";
+			if ( jsonData.value === "0" ) jsonData.value = _name_unknown;
 			else jsonData.value = "known";
 			
 			jsonData.prgrel = "inProgram";
@@ -268,22 +274,22 @@ app.process_UnknownChanges = function( json_structuredList, programData )
 
 		try
 		{
-			if ( eventData.value === "unknown" )
+			if ( eventData.value === _name_unknown )
 			{
-				if ( _mode === "Compare" )
+				if ( _mode === _name_Compare )
 				{
 					// check if aggregate list has this
 					var matchAggrData = Util.getItemFromList( aggrList, eventData.ouid, "ouid" );
 
 					// If event side detects 'unknown' and aggregate side does not already have it as 'unknown', submit it for next 24 months (starting from this month)
-					if ( matchAggrData === undefined || matchAggrData.value !==  "unknown" )
+					if ( matchAggrData === undefined || matchAggrData.value !==  _name_unknown )
 					{
-						app.submitDataToAggr( eventData, "unknown", programData );
+						app.submitDataToAggr( eventData, _name_unknown, programData );
 					}
 				}
 				else
 				{
-					app.submitDataToAggr( eventData, "unknown", programData );
+					app.submitDataToAggr( eventData, _name_unknown, programData );
 				}
 			}
 		}
@@ -308,10 +314,10 @@ app.process_ClearUnknownAndKnown = function( json_structuredList, programData )
 
 		// For now, only update the 'unknown' ones..  <-- rather than
 		// updating all Unassociated ones (OUs to program)
-		// if ( aggrData.value === "unknown" && aggrData.prgrel === "notInProgram" )
-		if ( aggrData.prgrel === "notInProgram" )
+		// if ( aggrData.value === _name_unknown && aggrData.prgrel === _name_notInProgram )
+		if ( aggrData.prgrel === _name_notInProgram )
 		{
-			app.submitDataToAggr( aggrData, "notInProgram", programData );
+			app.submitDataToAggr( aggrData, _name_notInProgram, programData );
 		}
 	}
 }
@@ -323,7 +329,7 @@ app.submitDataToAggr = function( dataJson, type, programData )
 	//var period = app.generateCurPeriod();	
 	var period = Util.generateCurPeriodFromStr( _startDateFormatted );
 
-	if ( type === "unknown" )
+	if ( type === _name_unknown )
 	{
 		var ouid = dataJson.ouid;
 
@@ -339,26 +345,26 @@ app.submitDataToAggr = function( dataJson, type, programData )
 		} );
 		// Delete Aggr Data 24 periods
 		var deListObj_UnknownDelete = {};
-		deListObj_UnknownDelete[ programData.deListObj[M_UID.KEYWORD_DE_DATE_LAST_CHANGE_DATE] ] = "2017-01-01";
-		deListObj_UnknownDelete[ programData.deListObj[M_UID.KEYWORD_DE_MONTH_SINCE_LAST_UPDATE] ] = "0";
+		deListObj_UnknownDelete[ programData.deList[M_UID.KEYWORD_DE_DATE_LAST_CHANGE_DATE] ] = "2017-01-01";
+		deListObj_UnknownDelete[ programData.deList[M_UID.KEYWORD_DE_MONTH_SINCE_LAST_UPDATE] ] = "0";
 		
-		AggrDataUtil.deleteData24Pe( deListObj_UnknownDelete, ouid, period, _apiUrl, 'UNKNOWN CLEAR case' );
+		AggrDataUtil.deleteData24Pe( deListObj_UnknownDelete, ouid, period, _apiUrl, 'UNKNOWN CLEAR Other DE' );
 	}
 	// else if ( type === "known" )  // <-- This gets changed/entered from custom form
 	//		Which, on Save, submits to aggregate side
 	//		, Thus, no need to run at here.
-	else if ( type === "notInProgram" )
+	else if ( type === _name_notInProgram )
 	{
 		var ouid = dataJson.ouid;
 
 		var deListObj = {};
-		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_STATUS_UNKNOWN] ] = "0";
-		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_STATUS_YES] ] = "0";
-		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_STATUS_NO] ] = "0";
-		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_MONTH_SINCE_LAST_UPDATE] ] = "0";
-		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_DATE_LAST_CHANGE_DATE] ] = "2017-01-01";
+		deListObj[ programData.deList[M_UID.KEYWORD_DE_STATUS_UNKNOWN] ] = "0";
+		deListObj[ programData.deList[M_UID.KEYWORD_DE_STATUS_YES] ] = "0";
+		deListObj[ programData.deList[M_UID.KEYWORD_DE_STATUS_NO] ] = "0";
+		deListObj[ programData.deList[M_UID.KEYWORD_DE_MONTH_SINCE_LAST_UPDATE] ] = "0";
+		deListObj[ programData.deList[M_UID.KEYWORD_DE_DATE_LAST_CHANGE_DATE] ] = "2017-01-01";
 
-		AggrDataUtil.deleteDataBySearchDe( deListObj, ouid, 'ALL', programData.deListObj[M_UID.KEYWORD_DE_STATUS_YES], _apiUrl, 'notInProgram CLEAR case' );		
+		AggrDataUtil.deleteDataBySearchDe( deListObj, ouid, 'ALL', programData.deList[M_UID.KEYWORD_DE_STATUS_YES], _apiUrl, 'notInProgram CLEAR case' );		
 	}
 }
 

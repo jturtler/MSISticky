@@ -1,7 +1,5 @@
 ﻿<div id="loadingDiv"><img src="../images/ajax-loader-circle.gif" /></div>
-
-<style>
-	.formCtrlReadOnly
+<style type="text/css">.formCtrlReadOnly
 	{
 		border: 0;
 		font-style: italic;
@@ -13,53 +11,63 @@
 		width: 100%;
 	}
 </style>
-
 <div id="misSegStatusLogDiv">
-	<table width="100%">
+<table width="100%">
+	<tbody>
 		<tr>
 			<td><strong>MSI Segmentation Log</strong></td>
-			<td align="right"><a href="https://docs.google.com/document/d/1s8IFPCOeRfTsOO1DMwgDKO95V1pBsZykPUU9do71spc" title="version doc" target="_blank" style="color: #276696">v 0.51</a></td>
+			<td align="right"><a href="https://docs.google.com/document/d/1mmeRnBq8uIx0p-iFbhHcs5F8zgs3l5HRCy64EZG7X2Y" style="color: #276696" target="_blank" title="version doc">v 1.03</a></td>
 		</tr>
-	</table>
-	<div id="divMsgFormMain" style="display: none; color: Red;"></div>
-	<div style="display: flex;justify-content: center;">
-		<table border="0" cellpadding="1" cellspacing="0" class="table" style="align-self: center;">
-			<tbody>
-				<tr>
-					<td style="width: 35%"><label>Previous Status</label></td>
-					<td><input id="PsdqRrx0KbU-T2iHkAEidOd-val" class="previousStatus formCtrlReadOnly" name="entryfield" title="T2iHkAEidOd - Log - Previous Segmentation - undefined" value="[Log - Previous Segmentation]" /></td>
-				</tr>
-				<tr>
-					<td><label>New Status</label></td>
-					<td><input id="PsdqRrx0KbU-wYoGZDnvu3n-val" class="newStatus" name="entryfield" title="[ wYoGZDnvu3n - Log - New Segmentation - TEXT ]" value="[Log - New Segmentation]" /></td>
-				</tr>
-				<tr>
-					<td><label>Days Elasped Since Previous Status</label></td>
-					<td><input id="qofz8VA3rt4-UrD7yr6JLEf-val" class="daysSincePrev formCtrlReadOnly" name="entryfield" title="UrD7yr6JLEf - Log - days elapsed from previous status - undefined" value="[Log - days elapsed from previous status]" /></td>
-				</tr>		
-				<tr>
-					<td><label>Comments</label></td>
-					<td><input class="noteComment" id="PsdqRrx0KbU-Yww3Z8MYo1e-val" name="entryfield" title="Yww3Z8MYo1e - Log - Notes - undefined" value="[Log - Notes]" /></td>
-				</tr>
-			</tbody>
-		</table>
+	</tbody>
+</table>
 
-	</div>
+<div id="divMsgFormMain" style="display: none; color: Red;">&nbsp;</div>
 
-	<script>
-
-		jQuery( document ).ready( function() {
-
-			var _logLevel = 0;
-			var _logText = "";
-			
-			var url_js_StickyUtil = "https://sandbox.orion.mariestopes.org/js/js_StickyUtil.js";
-			$.getScript( url_js_StickyUtil, function() {
-
-				var segLogObj = new MISSegLog();
-				segLogObj.init();
-			});
-		});
-
-	</script>
+<div style="display: none;">
+    <input class="previousStatus" id="PsdqRrx0KbU-T2iHkAEidOd-val" name="entryfield" title="[ T2iHkAEidOd - Log - Previous Segmentation - TEXT ]" value="[Log - Previous Segmentation]" />
+    <input class="newStatus" id="PsdqRrx0KbU-wYoGZDnvu3n-val" name="entryfield" title="[ wYoGZDnvu3n - Log - New Segmentation - TEXT ]" value="[Log - New Segmentation]" />
 </div>
+
+<div style="display: flex;justify-content: center;">
+<table border="0" cellpadding="1" cellspacing="0" class="table" style="align-self: center;">
+	<tbody>
+		<tr>
+			<td style="width: 35%"><label>Previous Status</label></td>
+            <td><input class="previousSubStatus formCtrlReadOnly" id="PsdqRrx0KbU-Lwugb7O0coU-val" name="entryfield" title="Lwugb7O0coU - Log - Previous Sub Segmentation - undefined" value="[Log - Previous Sub Segmentation]" /></td>
+            <td style="vertical-align: middle;"><span id="spanPreviousStatus" style="color: #555; font-weight: 500;"></span></td>
+		</tr>
+		<tr>
+			<td><label>New Status</label></td>
+            <td><input class="newSubStatus" id="PsdqRrx0KbU-DwXW311h36K-val" name="entryfield" title="DwXW311h36K - Log - New Sub Segmentation - undefined" value="[Log - New Sub Segmentation]" /></td>
+            <td style="vertical-align: middle;"><span id="spanNewStatus" style="color: #555; font-weight: 500;"></span></td>
+		</tr>
+		<tr>
+			<td><label>Days Elasped Since Previous Status</label></td>
+			<td colspan="2"><input class="daysSincePrev formCtrlReadOnly" id="qofz8VA3rt4-UrD7yr6JLEf-val" name="entryfield" title="[ UrD7yr6JLEf - Log - days elapsed from previous status - NUMBER ]" value="[Log - days elapsed from previous status]" /></td>
+		</tr>
+		<tr>
+			<td><label>Comments</label></td>
+			<td colspan="2"><input class="noteComment" id="PsdqRrx0KbU-Yww3Z8MYo1e-val" name="entryfield" title="[ Yww3Z8MYo1e - Log - Notes - LONG_TEXT ]" value="[Log - Notes]" /></td>
+		</tr>
+	</tbody>
+</table>
+</div>
+<script>
+
+    jQuery( document ).ready( function() {
+
+        var _logLevel = 0;
+        var _logText = "";
+
+        // var url_js_StickyUtil = "http://localhost:8080/js/js_StickyUtil.js";
+        
+        var url_js_StickyUtil = "https://sandbox.orion.mariestopes.org/js/js_StickyUtil.js";
+        
+        $.getScript( url_js_StickyUtil, function() {
+
+            var segLogObj = new MISSegLog();
+            segLogObj.init();
+        });
+    });
+
+</script></div>

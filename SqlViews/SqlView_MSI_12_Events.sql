@@ -9,6 +9,9 @@ select psi.uid
  , elapsDate.value as "elapsDate"
  , noteData.value as "noteData"
 
+ , prevSubSts.value as "prevSubSts"
+ , newSubSts.value as "newSubSts"
+
 from programstageinstance as psi
   inner join organisationunit ou
     on ou.organisationunitid = psi.organisationunitid
@@ -23,10 +26,18 @@ from programstageinstance as psi
   left outer join trackedentitydatavalue as prevSts
     on psi.programstageinstanceid = prevSts.programstageinstanceid
       and prevSts.dataelementid = 786154
+
+  left outer join trackedentitydatavalue as prevSubSts
+    on psi.programstageinstanceid = prevSubSts.programstageinstanceid
+      and prevSubSts.dataelementid = 2869137
       
   left outer join trackedentitydatavalue as newSts
     on psi.programstageinstanceid = newSts.programstageinstanceid
       and newSts.dataelementid = 244951
+
+  left outer join trackedentitydatavalue as newSubSts
+    on psi.programstageinstanceid = newSubSts.programstageinstanceid
+      and newSubSts.dataelementid = 2869119
 
   left outer join trackedentitydatavalue as elapsDate
     on psi.programstageinstanceid = elapsDate.programstageinstanceid

@@ -3,8 +3,10 @@
 **/
 var urlsync = require('urllib-sync');
 var fs = require('fs');
-var settingObj = JSON.parse(fs.readFileSync('setting.txt', 'utf8'));
-eval( urlsync.request( settingObj.jsFile ).data.toString( 'utf8' )+'' );
+var settingLoc = '/tmp/nodejs/setting.txt';
+var settingLoc2 = 'setting.txt';
+var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
+eval( urlsync.request( settingObj.jsFile, {timeout: 600000} ).data.toString( 'utf8' )+'' );
 
 RESTUtil.options = { auth: settingObj.dhis.user + ':' + settingObj.dhis.password, timeout: 600000 };
 RESTUtil.encoding = 'utf8';
@@ -27,27 +29,6 @@ var _logLevel = ( _argvSetObj[ "logLevel" ] !== undefined ) ? Number( _argvSetOb
 
 var _startDateFormatted = "";	// Will be set in later moment
 
-/*
-// ==== CatOptionCombo Default (Different Between Servers) ====
-var M_UID.CATOPTIONCOMBO_DEFAULT = "CQ6ibh5Ggda";
-
-// ==== DataElements ====
-var AGG_DE_SEGMENTATION_A = "IXd6OFCZAfl";
-var AGG_DE_SEGMENTATION_B = "lwhzwU6nrJh";
-var AGG_DE_SEGMENTATION_C = "RDAsWi4QOmo";
-var AGG_DE_SEGMENTATION_D = "Mo76PCg8nZf";
-var AGG_DE_SEGMENTATION_UNKNOWN = "WlwUwXL7zjg"; // Sticky Segmentation - Unknown
-
-var AGG_DE_DATE_LAST_CHANGE = "k0Ws0xA2vDj";
-var AGG_DE_UPDATED_THIS_MONTH = "DRvlWf9T4tg";
-var AGG_DE_MONTHS_SINCE_LAST_UPDATE = "hXLyGfE2sFi";
-
-var _programId = "nPVbI9R3Avm";
-var _stageId = "qofz8VA3rt4";
-//var _programTableId = 245275;
-//var _deTableId_unknown = 244970;
-*/
-
 // ==== Sql View ====
 var _apiUrl = _serverUrl + "/api/";
 
@@ -65,6 +46,10 @@ var _logText = "";	// collect the console log data and use it to output in Log P
 var _foundFailedCase = false;
 
 var _scriptName = "MSI12_Unknown.js";
+
+var _name_unknown = "unknown";
+var _name_notInProgram =  "notInProgram";
+var _name_Compare = "Compare";
 
 // ---------------------------------------------------
 // --------------- App Run Method --------------------
@@ -165,18 +150,18 @@ app.getStructuredList_JsonData = function( jsonSqlViewData )
 		if ( jsonData.type === "aggr" )
 		{
 			// 0, 1, ""
-			if ( jsonData.value === "1" ) jsonData.value = "unknown";
+			if ( jsonData.value === "1" ) jsonData.value = _name_unknown;
 			else if ( jsonData.value === "0" ) jsonData.value = "known";
 			else if ( jsonData.value === "" ) jsonData.value = "noData";
 
-			if ( jsonData.prgrel === "" ) jsonData.prgrel = "notInProgram";
+			if ( jsonData.prgrel === "" ) jsonData.prgrel = _name_notInProgram;
 			else jsonData.prgrel = "inProgram";
 
 			json_structuredList.aggr.push( jsonData );
 		}
 		else if ( jsonData.type === "event" )
 		{
-			if ( jsonData.value === "0" ) jsonData.value = "unknown";
+			if ( jsonData.value === "0" ) jsonData.value = _name_unknown;
 			else jsonData.value = "known";
 			
 			jsonData.prgrel = "inProgram";
@@ -203,22 +188,22 @@ app.process_UnknownChanges = function( json_structuredList )
 
 		try
 		{
-			if ( eventData.value === "unknown" )
+			if ( eventData.value === _name_unknown )
 			{
-				if ( _mode === "Compare" )
+				if ( _mode === _name_Compare )
 				{
 					// check if aggregate list has this
 					var matchAggrData = Util.getItemFromList( aggrList, eventData.ouid, "ouid" );
 
 					// If event side detects 'unknown' and aggregate side does not already have it as 'unknown', submit it for next 24 months (starting from this month)
-					if ( matchAggrData === undefined || matchAggrData.value !==  "unknown" )
+					if ( matchAggrData === undefined || matchAggrData.value !==  _name_unknown )
 					{
-						app.submitDataToAggr( eventData, "unknown" );
+						app.submitDataToAggr( eventData, _name_unknown );
 					}
 				}
 				else
 				{
-					app.submitDataToAggr( eventData, "unknown" );					
+					app.submitDataToAggr( eventData, _name_unknown );					
 				}
 			}
 		}
@@ -243,10 +228,10 @@ app.process_ClearUnknownAndKnown = function( json_structuredList )
 
 		// For now, only update the 'unknown' ones..  <-- rather than
 		// updating all Unassociated ones (OUs to program)
-		// if ( aggrData.value === "unknown" && aggrData.prgrel === "notInProgram" )
-		if ( aggrData.prgrel === "notInProgram" )
+		// if ( aggrData.value === _name_unknown && aggrData.prgrel === _name_notInProgram )
+		if ( aggrData.prgrel === _name_notInProgram )
 		{
-			app.submitDataToAggr( aggrData, "notInProgram" );
+			app.submitDataToAggr( aggrData, _name_notInProgram );
 		}
 	}
 }
@@ -257,7 +242,7 @@ app.submitDataToAggr = function( dataJson, type )
 	//var period = app.generateCurPeriod();	
 	var period = Util.generateCurPeriodFromStr( _startDateFormatted );
 
-	if ( type === "unknown" )
+	if ( type === _name_unknown )
 	{
 		var ouid = dataJson.ouid;
 
@@ -268,6 +253,15 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_B ] = "0";
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_C ] = "0";
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_A1 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_B1 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_B2 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_C1 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_C2 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D1 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D2 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D3 ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D4 ] = "0";		
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED ] = "0";
 
 		AggrDataUtil.addData24Pe( deListObj_Unknown, ouid, period, _apiUrl, 'UNKNOWN case', function() {}, function() 
@@ -287,7 +281,7 @@ app.submitDataToAggr = function( dataJson, type )
 	// else if ( type === "known" )  // <-- This gets changed/entered from custom form
 	//		Which, on Save, submits to aggregate side
 	//		, Thus, no need to run at here.
-	else if ( type === "notInProgram" )
+	else if ( type === _name_notInProgram )
 	{
 		var ouid = dataJson.ouid;
 
@@ -297,6 +291,15 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_B ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_C ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_D ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_A1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_B1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_B2 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_C1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_C2 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D1 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D2 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D3 ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_D4 ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_DATE_LAST_CHANGE ] = "2017-01-01";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH ] = "0";
