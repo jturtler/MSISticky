@@ -118,7 +118,7 @@ M_UID.AGG_DE_SEGMENTATION_B = "lwhzwU6nrJh";
 M_UID.AGG_DE_SEGMENTATION_C = "RDAsWi4QOmo";
 M_UID.AGG_DE_SEGMENTATION_D = "Mo76PCg8nZf";
 M_UID.AGG_DE_SEGMENTATION_UNKNOWN = "WlwUwXL7zjg"; // Sticky Segmentation 
-M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED = "GZYmBByQIpc";
+M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISE = "GZYmBByQIpc";
 
 M_UID.AGG_DE_SEGMENTATION_A1 = "pPusa1XgLvR";
 M_UID.AGG_DE_SEGMENTATION_B1 = "gzItNuOawEm";
@@ -1339,6 +1339,8 @@ AggrDataUtil.saveStatusDataValue = function( eventDate, deId, ouId, value, url, 
 	}
 	
 	var jsonList = { "dataValues" : json_structuredList };
+
+	if ( value == "1" ) console.log( 'saveStatusDataValue: ' + JSON.stringify( jsonList )  );
 
 	if ( syncStr && syncStr === 'Sync' ) AggrDataUtil.submitDataValueSet_Sync( jsonList, url );
 	else AggrDataUtil.submitDataValueSet_Async( jsonList, url );
@@ -2721,6 +2723,7 @@ function MISSegLog()
 				// Add event here..
 				me.createEvent_Seg( eventDate, subStatusCode_DISENF, ouId, lastEvent, function()
 				{						
+					console.log( 'Seg Disenfranchise event created' );
 					// Perform the Aggregate side data populate
 					me.saveDataValuesAndUpdateOuGroups_Inner( eventDate, subStatusCode_DISENF, ouId );
 
@@ -2807,7 +2810,9 @@ function MISSegLog()
 			var statusCode = EventDataUtil.getStatusCodeFromSubStatus( subStatusCode );		
 			var aggDeSegId = me.getAggSegDeId_FromStatusCode( statusCode );
 			var ougId = me.getOugId_FromStatusCode( statusCode );
-			
+
+			console.log( 'saveDataValuesAndUpdateOuGroups_Inner, subStatusCode: ' + subStatusCode + ',aggDeSegSubId: ' + aggDeSegSubId + ', statusCode: ' + statusCode + ', aggDeSegId: ' + aggDeSegId );
+
 			// Main Seg Status Save (SubSeg and Seg)
 			me.saveSegStatusData( eventDate, ouId, aggDeSegSubId, aggDeSegId, ougId );			
 

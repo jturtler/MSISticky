@@ -262,7 +262,7 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D2 ] = "0";
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D3 ] = "0";
 		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_D4 ] = "0";		
-		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED ] = "0";
+		deListObj_Unknown[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISE ] = "0";
 
 		AggrDataUtil.addData24Pe( deListObj_Unknown, ouid, period, _apiUrl, 'UNKNOWN case', function() {}, function() 
 		{
@@ -300,7 +300,7 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_D2 ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_D3 ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_D4 ] = "0";
-		deListObj[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISED ] = "0";
+		deListObj[ M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISE ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_DATE_LAST_CHANGE ] = "2017-01-01";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_MONTHS_SINCE_LAST_UPDATE ] = "0";
