@@ -305,7 +305,8 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_MONTHS_SINCE_LAST_UPDATE ] = "0";
 
-		AggrDataUtil.deleteDataBySearchDe( deListObj, ouid, 'ALL', M_UID.AGG_DE_SEGMENTATION_A, _apiUrl, 'notInProgram CLEAR case' );
+		AggrDataUtil.deleteDataBySearchDe( undefined, deListObj, ouid, 'ALL', 'ALL', '12', undefined, _apiUrl, 'notInProgram CLEAR case' );
+		
 	}
 }
 

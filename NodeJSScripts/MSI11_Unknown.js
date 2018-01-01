@@ -273,7 +273,7 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj_UnknownDelete[ M_UID.AGG_DE_MONTHS_SINCE_JOINING_NETWORK ] = "0";
 		deListObj_UnknownDelete[ M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ] = "0";
 		deListObj_UnknownDelete[ M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ] = "0";
-		deListObj_UnknownDelete[ M_UID.AGG_DE_STATUS_DATE_LAST_CHANGE ] = "2017-01-01";
+		deListObj_UnknownDelete[ M_UID.AGG_DE_STATUS_LAST_CHANGE ] = "2017-01-01";
 		deListObj_UnknownDelete[ M_UID.AGG_DE_STATUS_UPDATED_THIS_MONTH ] = "0";
 		deListObj_UnknownDelete[ M_UID.AGG_DE_STATUS_MONTHS_SINCE_LAST_UPDATE ] = "0";
 		
@@ -298,11 +298,12 @@ app.submitDataToAggr = function( dataJson, type )
 		deListObj[ M_UID.AGG_DE_MONTHS_SINCE_JOINING_NETWORK ] = "0";
 		deListObj[ M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ] = "0";
 		deListObj[ M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ] = "0";
-		deListObj[ M_UID.AGG_DE_STATUS_DATE_LAST_CHANGE ] = "2017-01-01";
+		deListObj[ M_UID.AGG_DE_STATUS_LAST_CHANGE ] = "2017-01-01";
 		deListObj[ M_UID.AGG_DE_STATUS_UPDATED_THIS_MONTH ] = "0";
 		deListObj[ M_UID.AGG_DE_STATUS_MONTHS_SINCE_LAST_UPDATE ] = "0";
-				
-		AggrDataUtil.deleteDataBySearchDe( deListObj, ouid, 'ALL', M_UID.AGG_DE_FRANCHISEE_ON_BOARDING, _apiUrl, 'notInProgram CLEAR case' );
+
+		AggrDataUtil.deleteDataBySearchDe( undefined, deListObj, ouid, 'ALL', 'ALL', '11', undefined, _apiUrl, 'notInProgram CLEAR case' );
+		
 	}
 }
 

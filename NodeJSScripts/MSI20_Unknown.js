@@ -364,7 +364,7 @@ app.submitDataToAggr = function( dataJson, type, programData )
 		deListObj[ programData.deList[M_UID.KEYWORD_DE_MONTH_SINCE_LAST_UPDATE] ] = "0";
 		deListObj[ programData.deList[M_UID.KEYWORD_DE_DATE_LAST_CHANGE_DATE] ] = "2017-01-01";
 
-		AggrDataUtil.deleteDataBySearchDe( deListObj, ouid, 'ALL', programData.deList[M_UID.KEYWORD_DE_STATUS_YES], _apiUrl, 'notInProgram CLEAR case' );		
+		AggrDataUtil.deleteDataBySearchDe( undefined, deListObj, ouid, 'ALL', 'ALL', '20', programData.id, _apiUrl, 'notInProgram CLEAR case' );
 	}
 }
 

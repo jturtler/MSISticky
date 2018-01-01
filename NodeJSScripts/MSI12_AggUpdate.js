@@ -98,7 +98,7 @@ app.run = function()
 
 
 					// populate data + orgUnit Group update??
-					var eventList_byOU = app.updateData( json_structuredList );
+					var eventList_byOU = app.updateData( json_structuredList, _ouid );
 					if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>OrgUnit Count: ' + Object.keys( eventList_byOU ).length );
 
 
@@ -164,7 +164,7 @@ app.getStructuredList_JsonData = function( jsonSqlViewData )
 
 
 // Do not add 'try/catch' here since we should not continue if it fails (not have proper data)...
-app.updateData = function( jsonDataList )
+app.updateData = function( jsonDataList, ouid_passed )
 {
 	var ouId;
 
@@ -173,6 +173,12 @@ app.updateData = function( jsonDataList )
 
 	// Group the event by orgUnit and process to set Prev and elapseSince
 	var eventList_byOU = Util.getGroupByData( jsonDataList, 'ouId' );
+
+
+	// Add Empty Array OrgUnit - for processing deletion. (of OUG & Aggre)
+	// If specific orgUnit passed, or if exists in OrgUnitGroup but not in event list
+	Util.setEventList_EmptyOuArray( eventList_byOU, ouid_passed, _apiUrl + 'sqlViews/' + AggrDataUtil._sqlViewId_OrgUnitInOUG_Form12 + '/data.json' );
+
 
 	//Util.ConsoleLog( 'Group by ouId data: ' + JSON.stringify( eventList_byOU ) );
 	process.stdout.write( "Processing Prev Data: " );
@@ -212,7 +218,7 @@ app.process_OUGroupUpdate = function( eventList_byOU )
 			{
 				var latestEventData = ouEventList_sorted[ ouEventList_sorted.length - 1 ];
 
-				OUGroupUtil.setOUGroups_SegLog( ouId, latestEventData.status, _apiUrl );
+				OUGroupUtil.setOUGroups_SegLog_WithSub( ouId, latestEventData.status, latestEventData.subStatus, _apiUrl );
 			}
 			else
 			{
@@ -399,7 +405,7 @@ app.deleteDataValueSet = function( orgUnitId, afterDelFunc )
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_UPDATE_THIS_MONTH ] = "0";
 		deListObj[ M_UID.AGG_DE_SEGMENTATION_MONTHS_SINCE_LAST_UPDATE ] = "0";
 				
-		AggrDataUtil.deleteDataBySearchDe( deListObj, orgUnitId, 'ALL', M_UID.AGG_DE_SEGMENTATION_A, _apiUrl, 'CLEAR data before update.', function()
+		AggrDataUtil.deleteDataBySearchDe( undefined, deListObj, orgUnitId, 'ALL', 'ALL', '12', undefined, _apiUrl, 'CLEAR data before update.', function()
 		{
 			Util.ConsoleLog( '<BR> == SUCCESS ON deleteDataBySearchDe' );			
 			afterDelFunc( true );

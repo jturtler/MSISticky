@@ -205,6 +205,11 @@ app.processProgram = function( programData )
 						// group event by ou
 						var eventList_byOU = Util.getGroupByData( json_structuredList, 'ouId' );
 						
+
+						// If this is one specific orgUnit request case, if data(event) emtpy case, manually add it - for it to process further, for updating ouGroup, deleting data.
+						Util.setEventList_EmptyOuArray( eventList_byOU, _ouid );
+
+
 						// Update Aggregate side with New Unknown and Changed to Known orgUnits
 						app.process_AggUpdate( eventList_byOU, programData );
 
@@ -381,7 +386,7 @@ app.deleteDataValueSet = function( orgUnitId, programData, afterDelFunc )
 		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_MONTH_SINCE_LAST_UPDATE] ] = "0";
 		deListObj[ programData.deListObj[M_UID.KEYWORD_DE_DATE_LAST_CHANGE_DATE] ] = "2017-01-01";
 								
-		AggrDataUtil.deleteDataBySearchDe( deListObj, orgUnitId, 'ALL', programData.deListObj[M_UID.KEYWORD_DE_STATUS_YES], _apiUrl, 'CLEAR data before update.', function()
+		AggrDataUtil.deleteDataBySearchDe( undefined, deListObj, orgUnitId, 'ALL', 'ALL', '20', programData.id, _apiUrl, 'CLEAR data before update.', function()
 		{
 			Util.ConsoleLog( '<BR> == SUCCESS ON deleteDataBySearchDe' );
 			afterDelFunc( true );

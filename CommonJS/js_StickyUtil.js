@@ -12,8 +12,8 @@
 	- MSISegLog	- MSI Segmentation Form (1.2) related
 */ 
 
-// NOTE: LAST change date - 2017-12-15
-// console.log( 'js_StickyUtil.js local loaded v1.12' );
+// NOTE: LAST change date - 2017-12-18
+// console.log( 'js_StickyUtil.js local loaded v1.13' );
 
 
 // ---------------------------------
@@ -49,6 +49,12 @@ LogProgram.DE_ID_OverallResult = "qiRa8iwGtFE";
 LogProgram.DE_ID_FullReport = "e9CLQZqGJPo";
 
 AggrDataUtil._sqlViewId_DataSearch = 'PgVKlgcVLUt';
+AggrDataUtil._sqlViewId_DataSearch_Form11 = 'GnPIvGzQU7G';
+AggrDataUtil._sqlViewId_DataSearch_Form12 = 'WFnFbxx9aMC';
+AggrDataUtil._sqlViewId_DataSearch_Form20 = 'BpSi9iZ1mdb';
+
+AggrDataUtil._sqlViewId_OrgUnitInOUG_Form11 = 'Fu3Wc9pt112';
+AggrDataUtil._sqlViewId_OrgUnitInOUG_Form12 = 'Sou7m9Ptwec';
 
 
 // ----------------------------------------------
@@ -139,15 +145,24 @@ M_UID.EVENT_DE_SEGMENTATION_SUB = "DwXW311h36K";
 M_UID.EVENT_DE_SEGMENTATION_PREVIOUS = "T2iHkAEidOd";
 M_UID.EVENT_DE_SEGMENTATION_SUB_PREVIOUS = "Lwugb7O0coU";
 
-// ==== OU GROUP ==== GROUP_OU_ vs OUG_UID_
+// ==== OU GROUP ====
 M_UID.OUG_UID_SEGMENTATION_A = "VgUniUYGInI";
 M_UID.OUG_UID_SEGMENTATION_B = "h90V7SLY1bm";
 M_UID.OUG_UID_SEGMENTATION_C = "dgJIod9A9Zz";
 M_UID.OUG_UID_SEGMENTATION_D = "ZFY5dg0Cr3N";
 M_UID.OUG_UID_SEGMENTATION_UNKNOWN = "Rx8VFFO2ZU0";
 M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE = "Jw7MSDwSY8O";
+M_UID.OUG_UID_SEGMENTATION_A1 = "m9GtDGXSunQ";
+M_UID.OUG_UID_SEGMENTATION_B1 = "NgXHFUIoxN0";
+M_UID.OUG_UID_SEGMENTATION_B2 = "VVG5scxK6iZ";
+M_UID.OUG_UID_SEGMENTATION_C1 = "iakoo2fTHpn";
+M_UID.OUG_UID_SEGMENTATION_C2 = "f0KMYmwOHg6";
+M_UID.OUG_UID_SEGMENTATION_D1 = "lQfFa7sohBT";
+M_UID.OUG_UID_SEGMENTATION_D2 = "SWIUrFEvpQN";
+M_UID.OUG_UID_SEGMENTATION_D3 = "qDCqiWmf3IE";
+M_UID.OUG_UID_SEGMENTATION_D4 = "rl9mPY1Ni3U";
 
-// TODO: MORE OPTIONS
+// ==== CODE ====
 M_UID.SEGMENTATION_CODE_A = "A";
 M_UID.SEGMENTATION_CODE_B = "B";
 M_UID.SEGMENTATION_CODE_C = "C";
@@ -483,13 +498,17 @@ Util.getGroupByData = function( jsonDataList, prop )
 	for( var i = 0; i < jsonDataList.length; i++ )
 	{
 		var jsonData = jsonDataList[i];
-		var propVal = jsonData[ prop ];
-		var objWithList = listObj[ propVal ];
+		var propVal = jsonData[ prop ];  // if prop is 'ouid', we get the ouid value as 'propVal'
+
+		// obj in new list, if ready created..
+		var objWithList = listObj[ propVal ]; 
 		
+		// If already exists in the list, get it(inner array) and append to the array..
+		// The new list will consist of 'id : [ {jsonData}, {jsonData} ]', each 'jsonData' is the full json data of original (the event data?).
 		if ( objWithList ) objWithList.push( jsonData );
 		else
 		{
-			// array with one event in it.
+			// new case - array with one event in it.
 			listObj[ propVal ] = [ jsonData ];
 		}
 	}
@@ -696,6 +715,61 @@ Util.checkIfEventDateInCurPeriod = function( eventDate, period )
 	var eventPeriod = Util.generateEventPeriod( eventDate );
 	return ( eventPeriod === period );
 };
+
+
+// --- Empty data in orgUnitList (Object) ------------------
+Util.setEventList_EmptyOuArray = function( eventList_byOU, ouid, queryUrl_OrgUnitInOUG )
+{
+	// If this is one specific orgUnit request case, if data(event) emtpy case, manually add it 
+	//	- for it to process further, for updating ouGroup, deleting data.
+	if ( ouid === "ALL" )
+	{
+		if ( queryUrl_OrgUnitInOUG !== undefined )
+		{
+			Util.retreiveOrgUnitInOUG( queryUrl_OrgUnitInOUG, function( orgUnitsInObj ) 
+			{
+				for ( var ouid_OUG in orgUnitsInObj )
+				{
+					if ( eventList_byOU[ ouid_OUG ] === undefined )
+					{
+						// Add emtpy array for this orgUnit - for processing deletion. (of OUG & Aggre)
+						eventList_byOU[ ouid_OUG ] = [];
+					}
+				}
+			});
+		}
+	}
+	else
+	{ 
+		if ( eventList_byOU[ ouid ] === undefined )
+		{
+			eventList_byOU[ ouid ] = [];
+		}
+	}
+};
+
+Util.retreiveOrgUnitInOUG = function( queryUrl, returnFunc )
+{
+	var json_orgUnits = {};
+
+	RESTUtil.retreiveData_Synch( queryUrl, function( json_SqlViewData )
+	{
+		if ( json_SqlViewData !== undefined )
+		{
+			var jsonDataList = jsonSqlViewData.rows;
+
+			// Get all data. add into structure
+			for( var i = 0; i < jsonDataList.length; i++ )
+			{
+				var data = jsonDataList[i];
+
+				json_orgUnits[ data[0] ] = "Y";
+			}
+		}
+
+		returnFunc( json_orgUnits );
+	});	
+}
 
 // ----------------------------------------------
 // --------------- RESTUtil Related -----------------
@@ -1009,6 +1083,42 @@ OUGroupUtil.setOUGroups_SegLog = function( ouid, status, apiUrl )
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
 }
 
+OUGroupUtil.setOUGroups_SegLog_WithSub = function( ouid, status, subStatus, apiUrl )
+{
+	// NOTE: TODO: COULD INHANCE THIS?  RATER THAN TRYING THE DELETION OF ALL, WE MIGHT LOOK FOR THEM FIRST?
+
+	// Add orgUnit in Group
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_A1, ( subStatus === M_UID.SEGMENTATION_CODE_A1 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_B1, ( subStatus === M_UID.SEGMENTATION_CODE_B1 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_B2, ( subStatus === M_UID.SEGMENTATION_CODE_B2 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_C1, ( subStatus === M_UID.SEGMENTATION_CODE_C1 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_C2, ( subStatus === M_UID.SEGMENTATION_CODE_C2 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D1, ( subStatus === M_UID.SEGMENTATION_CODE_D1 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D2, ( subStatus === M_UID.SEGMENTATION_CODE_D2 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D3, ( subStatus === M_UID.SEGMENTATION_CODE_D3 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D4, ( subStatus === M_UID.SEGMENTATION_CODE_D4 ), apiUrl );
+
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_A, ( status === M_UID.SEGMENTATION_CODE_A ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_B, ( status === M_UID.SEGMENTATION_CODE_B ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_C, ( status === M_UID.SEGMENTATION_CODE_C ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D, ( status === M_UID.SEGMENTATION_CODE_D ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_UNKNOWN, ( status === M_UID.SEGMENTATION_CODE_UNKNOWN ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
+}
+
+/*
+1.9.4.2. Adding or removing multiple objects
+You can add or remove multiple objects from a collection in one request with a payload like this:
+
+{
+  "identifiableObjects": [
+    { "id": "IDA" },
+    { "id": "IDB" },
+    { "id": "IDC" }
+  ]
+}
+*/
+
 
 OUGroupUtil.setOrgUnitToGroup = function( ouId, groupId, isAddCase, apiUrl )
 {	
@@ -1058,23 +1168,12 @@ OUGroupUtil.matchAndJoin_OuGroup = function( ouId, ougId, ougId2, url )
 // ------------------------------------------------
 // --- AggrDataUtil Class -------------------------
 
-AggrDataUtil.deleteDataBySearchDe = function( deListObj, ouid, startDate, searchDeId, apiUrl, msgText, returnSuccess, returnFailure )
+
+// TODO: MAKE IT THE MAIN AND ONLY ONE!!!!
+AggrDataUtil.deleteDataBySearchDe = function( formAsyncStr, deListObj, ouid, startDate, endDate, formType, form20Id, apiUrl, msgText, returnSuccess, returnFailure )
 {
 	// retrieve period - 'startDate' example '2017-01-01'
-	AggrDataUtil.retrieveDataSearchPeriods( ouid, searchDeId, startDate, apiUrl, function( dataPeriods )
-	{
-		var peList = AggrDataUtil.getPeListFromDateStr( dataPeriods );
-
-		var queryUrl_delete = apiUrl + 'dataValueSets?importStrategy=DELETE';
-		AggrDataUtil.changeData ( deListObj, peList, ouid, queryUrl_delete, msgText, returnSuccess, returnFailure );
-	});
-};
-
-
-AggrDataUtil.deleteDataBySearchDe_WithEndDate = function( formAsyncStr, deListObj, ouid, startDate, endDate, searchDeId, apiUrl, msgText, returnSuccess, returnFailure )
-{
-	// retrieve period - 'startDate' example '2017-01-01'
-	AggrDataUtil.retrieveDataSearchPeriods_WithEndDate( ouid, searchDeId, startDate, endDate, apiUrl, function( dataPeriods )
+	AggrDataUtil.retrieveDataSearchPeriods_WithEndDate2( ouid, formType, form20Id, startDate, endDate, apiUrl, function( dataPeriods )
 	{
 		var peList = AggrDataUtil.getPeListFromDateStr( dataPeriods );
 
@@ -1109,37 +1208,25 @@ AggrDataUtil.addData_withPeDataList = function( periodListDataObj, ouid, apiUrl,
 
 // -----------------------------------------------
 
-AggrDataUtil.retrieveDataSearchPeriods = function( ouid, searchDeId, startDate, apiUrl, returnFunc )
+AggrDataUtil.retrieveDataSearchPeriods = function( ouid, formType, form20Id, startDate, endDate, apiUrl, returnFunc, formAsyncStr )
 {
-	var queryUrl = apiUrl + 'sqlViews/' + AggrDataUtil._sqlViewId_DataSearch 
-		+ '/data.json?var=ouid:' + ouid + '&var=deid:' + searchDeId 
-		+ '&var=startDate:' + startDate
-		+ '&var=endDate:' + 'ALL';
-	//queryUrl = queryUrl.replace( "[ouid]", ouid ); 
-	//queryUrl = queryUrl.replace( "[deid]", searchDeId ); 
-	
-	// Retrieve SQLView data
-	RESTUtil.retreiveData_Synch( queryUrl, function( json_SqlViewData )	
+	var sqlViewId = "";
+	var tailCondition = "";
+
+	if ( formType === "11" ) sqlViewId = AggrDataUtil._sqlViewId_DataSearch_Form11;
+	else if ( formType === "12" ) sqlViewId = AggrDataUtil._sqlViewId_DataSearch_Form12;
+	else if ( formType === "20" ) 
 	{
-		var returnList = [];
-		var sqlRowsData = ( json_SqlViewData !== undefined ) ? json_SqlViewData.rows : [];
+		sqlViewId = AggrDataUtil._sqlViewId_DataSearch_Form20;
+		if ( !form20Id ) form20Id = '';  // case of error - being undefined..
+		tailCondition = '&var=prgid:' + form20Id;
+	}
 
-		for( var i = 0; i < sqlRowsData.length; i++ )
-		{
-			var data = sqlRowsData[i];
-			returnList.push( data[0] );
-		}
-
-		returnFunc( returnList );
-	});	
-};
-
-AggrDataUtil.retrieveDataSearchPeriods_WithEndDate = function( ouid, searchDeId, startDate, endDate, apiUrl, returnFunc, formAsyncStr )
-{
-	var queryUrl = apiUrl + 'sqlViews/' + AggrDataUtil._sqlViewId_DataSearch 
-		+ '/data.json?var=ouid:' + ouid + '&var=deid:' + searchDeId 
+	var queryUrl = apiUrl + 'sqlViews/' + sqlViewId 
+		+ '/data.json?var=ouid:' + ouid
 		+ '&var=startDate:' + startDate
-		+ '&var=endDate:' + endDate;
+		+ '&var=endDate:' + endDate 
+		+ tailCondition;
 	
 	// Retrieve SQLView data
 	var retrieveFunc = ( formAsyncStr && formAsyncStr === 'formAsync' ) ? RESTUtil.retreiveData_Asynch : RESTUtil.retreiveData_Synch;
@@ -1158,6 +1245,7 @@ AggrDataUtil.retrieveDataSearchPeriods_WithEndDate = function( ouid, searchDeId,
 		returnFunc( returnList );
 	});	
 };
+
 
 AggrDataUtil.changeData = function( deListObj, peList, ouid, queryUrl, msgText, returnSuccess, returnFailure, formAsyncStr )
 {
@@ -1339,8 +1427,6 @@ AggrDataUtil.saveStatusDataValue = function( eventDate, deId, ouId, value, url, 
 	}
 	
 	var jsonList = { "dataValues" : json_structuredList };
-
-	if ( value == "1" ) console.log( 'saveStatusDataValue: ' + JSON.stringify( jsonList )  );
 
 	if ( syncStr && syncStr === 'Sync' ) AggrDataUtil.submitDataValueSet_Sync( jsonList, url );
 	else AggrDataUtil.submitDataValueSet_Async( jsonList, url );
@@ -1981,7 +2067,7 @@ function MSIStatusLog( segObj )
 			deListObj[ deUid_monthsSince ] = "0";
 
 			// 2A. Delete the data (monthsSince) on previous periods
-			AggrDataUtil.deleteDataBySearchDe_WithEndDate( 'formAsync', deListObj, ouId, 'ALL', prevMonthDateStr, M_UID.AGG_DE_FRANCHISEE_ON_BOARDING, me._queryURL_api, "Remove previous periods monthsSince case" );
+			AggrDataUtil.deleteDataBySearchDe( 'formAsync', deListObj, ouId, 'ALL', prevMonthDateStr, '11', undefined, me._queryURL_api, "Remove previous periods monthsSince case" );
 
 
 			// 2B. Save the data to future periods -  add to the jsonList
@@ -2020,7 +2106,7 @@ function MSIStatusLog( segObj )
 		if ( deUid_monthsSince !== M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ) deListObj_others[ M_UID.AGG_DE_MONTHS_SINCE_ONBOARDING ] = "0";
 		if ( deUid_monthsSince !== M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ) deListObj_others[ M_UID.AGG_DE_MONTHS_SINCE_SUSPENDED ] = "0";
 	
-		AggrDataUtil.deleteDataBySearchDe_WithEndDate( 'formAsync', deListObj_others, ouId, eventDate, 'ALL', M_UID.AGG_DE_FRANCHISEE_ON_BOARDING, me._queryURL_api, "Remove other months since future periods" );
+		AggrDataUtil.deleteDataBySearchDe( 'formAsync', deListObj_others, ouId, eventDate, 'ALL', '11', undefined, me._queryURL_api, "Remove other months since future periods" );
 	};	
 
 
@@ -2539,7 +2625,6 @@ function MISSegLog()
 	}
 
 
-
 	// ----------------
 	
 	me.afterLoadedInitData = function()
@@ -2723,7 +2808,6 @@ function MISSegLog()
 				// Add event here..
 				me.createEvent_Seg( eventDate, subStatusCode_DISENF, ouId, lastEvent, function()
 				{						
-					console.log( 'Seg Disenfranchise event created' );
 					// Perform the Aggregate side data populate
 					me.saveDataValuesAndUpdateOuGroups_Inner( eventDate, subStatusCode_DISENF, ouId );
 
@@ -2809,12 +2893,12 @@ function MISSegLog()
 			var aggDeSegSubId = me.getAggSegSubDeId_FromStatusCode( subStatusCode );
 			var statusCode = EventDataUtil.getStatusCodeFromSubStatus( subStatusCode );		
 			var aggDeSegId = me.getAggSegDeId_FromStatusCode( statusCode );
-			var ougId = me.getOugId_FromStatusCode( statusCode );
 
-			console.log( 'saveDataValuesAndUpdateOuGroups_Inner, subStatusCode: ' + subStatusCode + ',aggDeSegSubId: ' + aggDeSegSubId + ', statusCode: ' + statusCode + ', aggDeSegId: ' + aggDeSegId );
+			var ougId = me.getOugId_FromStatusCode( statusCode );
+			var ougSubId = me.getOugId_FromSubStatusCode( subStatusCode );			
 
 			// Main Seg Status Save (SubSeg and Seg)
-			me.saveSegStatusData( eventDate, ouId, aggDeSegSubId, aggDeSegId, ougId );			
+			me.saveSegStatusData( eventDate, ouId, aggDeSegSubId, aggDeSegId, ougId, ougSubId );
 
 
 			var eventDate1 = eventDate.substring( 0, 19 ) ;			
@@ -2875,6 +2959,25 @@ function MISSegLog()
 		return ougId;
 	};
 	
+	me.getOugId_FromSubStatusCode = function( subStatusCode )
+	{
+		var ougId = '';
+
+		if( subStatusCode == M_UID.SEGMENTATION_CODE_A1 ) ougId = M_UID.OUG_UID_SEGMENTATION_A1;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_B1 ) ougId = M_UID.OUG_UID_SEGMENTATION_B1;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_B2 ) ougId = M_UID.OUG_UID_SEGMENTATION_B2;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_C1 ) ougId = M_UID.OUG_UID_SEGMENTATION_C1;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_C2 ) ougId = M_UID.OUG_UID_SEGMENTATION_C2;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_D1 ) ougId = M_UID.OUG_UID_SEGMENTATION_D1;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_D2 ) ougId = M_UID.OUG_UID_SEGMENTATION_D2;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_D3 ) ougId = M_UID.OUG_UID_SEGMENTATION_D3;
+		else if( subStatusCode == M_UID.SEGMENTATION_CODE_D4 ) ougId = M_UID.OUG_UID_SEGMENTATION_D4;
+		
+		//else if( subStatusCode == M_UID.SEGMENTATION_CODE_UNKNOWN ) ougId = M_UID.OUG_UID_SEGMENTATION_UNKNOWN;
+		//else if( subStatusCode == M_UID.SEGMENTATION_CODE_DISENFRANCHISE ) ougId = M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE;		
+
+		return ougId;
+	};
 
 	// Save data values, includes :
 	//		Sticky Status - Segmentation - updated this month
@@ -2917,7 +3020,7 @@ function MISSegLog()
 		AggrDataUtil.submitDataValueSet_Async( jsonList, me._queryURL_api );
 	};
 
-	me.saveSegStatusData = function( eventDate, ouId, aggSubSegDeId, aggSegDeId, ougSegId )
+	me.saveSegStatusData = function( eventDate, ouId, aggSubSegDeId, aggSegDeId, ougSegId, ougSubSegId )
 	{		
 		AggrDataUtil.matchAndSave_DataValue( eventDate, ouId, M_UID.AGG_DE_SEGMENTATION_A1, aggSubSegDeId, me._queryURL_api );
 		AggrDataUtil.matchAndSave_DataValue( eventDate, ouId, M_UID.AGG_DE_SEGMENTATION_B1, aggSubSegDeId, me._queryURL_api );
@@ -2937,11 +3040,26 @@ function MISSegLog()
 		AggrDataUtil.matchAndSave_DataValue( eventDate, ouId, M_UID.AGG_DE_SEGMENTATION_UNKNOWN, aggSegDeId, me._queryURL_api );
 		AggrDataUtil.matchAndSave_DataValue( eventDate, ouId, M_UID.AGG_DE_SEGMENTATION_DISENFRANCHISE, aggSegDeId, me._queryURL_api );
 
+		// 2. FOR A1 ~ D4 ones, need to set 2 orgUnit Groups - 
+		// 1. Need a method to return the matching OUG SUB-SEG to SEG
+		// But, we need to change it so that multiple orgUnitGroup case, it does not delete everything..
+		// It is a bit complicated...
+
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_A1, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_B1, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_B2, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_C1, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_C2, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_D1, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_D2, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_D3, ougSubSegId, me._queryURL_api );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_D4, ougSubSegId, me._queryURL_api );
 
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_A, ougSegId, me._queryURL_api );
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_B, ougSegId, me._queryURL_api );
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_C, ougSegId, me._queryURL_api );
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_D, ougSegId, me._queryURL_api );
+
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_UNKNOWN, ougSegId, me._queryURL_api );
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE, ougSegId, me._queryURL_api );
 	};
