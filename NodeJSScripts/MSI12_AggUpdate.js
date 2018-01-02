@@ -202,17 +202,20 @@ app.updateData = function( jsonDataList, ouid_passed )
 
 app.process_OUGroupUpdate = function( eventList_byOU )
 {
-	// per orgUnit, get the last event..
-	var ouId;
+	var ouCount = Object.keys( eventList_byOU ).length;
+	var count = 0;
 
-	for ( ouId in eventList_byOU )
+	if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<BR>=== OUGroup Update: ' );
+
+	for ( var ouId in eventList_byOU )
 	{
 		try
 		{
+			count++;			
 			var ouEventList = eventList_byOU[ ouId ];
 			var ouEventList_sorted = Util.sortByKey( ouEventList, "eventDate" );
 
-			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<BR> === OUGroup Update Process for ouId: ' + ouId + ', ' + ouEventList_sorted.length + ' EVENTS' );
+			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' - (' + count + '/' + ouCount + ') ouId: ' + ouId + ', events: ' + ouEventList_sorted.length );
 
 			if ( ouEventList_sorted.length > 0 )
 			{
@@ -236,21 +239,25 @@ app.process_OUGroupUpdate = function( eventList_byOU )
 
 app.process_AggUpdate = function( eventList_byOU )
 {
-	// per orgUnit, get the last event..
-	//var ouId;
+	var ouCount = Object.keys( eventList_byOU ).length;
+	var count = 0;
+
+	if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<BR>=== Aggr Update: ' );
 
 	for ( var ouId in eventList_byOU )
 	{
 		try
 		{
+			count++;
+			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' - (' + count + '/' + ouCount + ') ouid: ' + ouId );
+			
 			// Delete existing data in Aggregate side first!!
 			app.deleteDataValueSet( ouId, function( success ) 
 			{
 				var ouEventList = eventList_byOU[ ouId ];
 				var ouEventList_sorted = Util.sortByKey( ouEventList, "eventDate" );
 
-
-				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>-- Aggr Update OrgUnit Id ' + ouId + ', eventCount: ' + ouEventList_sorted.length );
+				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' eventCount: ' + ouEventList_sorted.length );
 
 				// STEP 1. go throw event list and submit to aggregate side.
 				for( var i = 0; i < ouEventList_sorted.length; i++ )

@@ -519,7 +519,7 @@ Util.getGroupByData = function( jsonDataList, prop )
 
 Util.ConsoleLog = function( msg )
 {
-	if ( _logText ) _logText += msg + '\n';
+	if ( _logText !== undefined && _logText ) _logText += msg + '\n';
 
 	console.log( msg );
 };
@@ -736,6 +736,12 @@ Util.setEventList_EmptyOuArray = function( eventList_byOU, ouid, queryUrl_OrgUni
 						eventList_byOU[ ouid_OUG ] = [];
 					}
 				}
+
+				var emptiedFoundNo = Object.keys( eventList_byOU ).length;
+				if ( emptiedFoundNo > 0 )
+				{
+					if ( _logLevel !== undefined && _logLevel >= 1 ) Util.ConsoleLog( '<br>--- emptiedFoundNo: ' + emptiedFoundNo );
+				}
 			});
 		}
 	}
@@ -756,7 +762,7 @@ Util.retreiveOrgUnitInOUG = function( queryUrl, returnFunc )
 	{
 		if ( json_SqlViewData !== undefined )
 		{
-			var jsonDataList = jsonSqlViewData.rows;
+			var jsonDataList = json_SqlViewData.rows;
 
 			// Get all data. add into structure
 			for( var i = 0; i < jsonDataList.length; i++ )
@@ -1173,8 +1179,10 @@ OUGroupUtil.matchAndJoin_OuGroup = function( ouId, ougId, ougId2, url )
 AggrDataUtil.deleteDataBySearchDe = function( formAsyncStr, deListObj, ouid, startDate, endDate, formType, form20Id, apiUrl, msgText, returnSuccess, returnFailure )
 {
 	// retrieve period - 'startDate' example '2017-01-01'
-	AggrDataUtil.retrieveDataSearchPeriods_WithEndDate2( ouid, formType, form20Id, startDate, endDate, apiUrl, function( dataPeriods )
+	AggrDataUtil.retrieveDataSearchPeriods( ouid, formType, form20Id, startDate, endDate, apiUrl, function( dataPeriods )
 	{
+		//AggrDataUtil.retrieveDataSearchPeriods = function( ouid, formType, form20Id, startDate, endDate, apiUrl, returnFunc, formAsyncStr )
+
 		var peList = AggrDataUtil.getPeListFromDateStr( dataPeriods );
 
 		var queryUrl_delete = apiUrl + 'dataValueSets?importStrategy=DELETE';
@@ -2198,7 +2206,7 @@ function MSIStatusLog( segObj )
 			{
 				me.segObj.addEvent_Disenfranchise( eventDate, ouId, function() 
 				{
-					console.log( 'Seg Disenfranchise Success' );
+					console.log( 'Seg Defranchised Success' );
 				} );
 			}
 		}		

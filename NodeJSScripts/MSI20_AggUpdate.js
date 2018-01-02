@@ -180,7 +180,7 @@ app.processProgram = function( programData )
 	{
 		if ( !programData.deListValid )
 		{
-			if ( _logLevel >= 1 ) Util.ConsoleLog( '<br>program ' + programData.id + ' does not have all the DE populated: ' + JSON.stringify( programData.deListObj ) );
+			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>program ' + programData.id + ' does not have all the DE populated: ' + JSON.stringify( programData.deListObj ) );
 		}
 		else
 		{
@@ -188,11 +188,13 @@ app.processProgram = function( programData )
 			
 			if ( programId )
 			{
+
+				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>=== Program: ' + programData.id );
+
 				// Retrieve Latest events of orgunits in current month
 				var queryUrl = _queryUrl_sqlViewData_EventsData + '?var=ouid:' + _ouid + '&var=prgid:' + programId + '&var=startDate:' + _startDate + '&var=endDate:' + _endDate + '&var=mode:' + _mode;
 
-
-				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>program queryUrl: ' + queryUrl );
+				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br> program queryUrl: ' + queryUrl );
 
 
 				RESTUtil.retreiveData_Synch( queryUrl, function( json_SqlViewData )
@@ -265,13 +267,18 @@ app.getStructuredList_JsonData = function( jsonSqlViewData )
 // Spend 40 min to finish this and talk to Tran about her sql?
 app.process_AggUpdate = function( eventList_byOU, programData )
 {
-	// per orgUnit, get the last event..
-	//var ouId;
+	var ouCount = Object.keys( eventList_byOU ).length;
+	var count = 0;
+
+	if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<BR>=== Aggr Update: ' );
 
 	for ( var ouId in eventList_byOU )
 	{
 		try
 		{
+			count++;
+			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' - (' + count + '/' + ouCount + ') ouid: ' + ouId );
+			
 			// Need to pass 'programData' <-- for program info
 			// Delete existing data in Aggregate side first!!
 			app.deleteDataValueSet( ouId, programData, function( success ) 
@@ -279,19 +286,20 @@ app.process_AggUpdate = function( eventList_byOU, programData )
 				var ouEventList = eventList_byOU[ ouId ];
 				var ouEventList_sorted = Util.sortByKey( ouEventList, "eventDate" );
 
-				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>-- Aggr Update OrgUnit Id ' + ouId + ', eventCount: ' + ouEventList_sorted.length );
+				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' eventCount: ' + ouEventList_sorted.length );
+
 				// STEP 1. go throw event list and submit to aggregate side.
 				for( var i = 0; i < ouEventList_sorted.length; i++ )
 				{				
-						try
-						{
-					app.submitDataToAggr( ouEventList_sorted[i], programData );
-						}
-						catch ( ex )
-						{
-							Util.ConsoleLog( '<br><br>###-ERROR- on Aggr Update, per Event, ouId: ' + ouId + ', msg: ' + ex.stack );
-							_foundFailedCase = true;
-						}					
+					try
+					{
+						app.submitDataToAggr( ouEventList_sorted[i], programData );
+					}
+					catch ( ex )
+					{
+						Util.ConsoleLog( '<br><br>###-ERROR- on Aggr Update, per Event, ouId: ' + ouId + ', msg: ' + ex.stack );
+						_foundFailedCase = true;
+					}					
 				
 				}
 
