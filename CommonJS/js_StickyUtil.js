@@ -192,6 +192,7 @@ M_UID.ATTR_STATUS_YES = "JNCRRIJCsPl"; // Sticky Status - Yes
 M_UID.ATTR_STATUS_NO = "xh8lSWP0dyv"; // Sticky Status - No
 M_UID.ATTR_MONTHS_SINCE_LAST_UPDATE = "c0eTL04Qnls"; // Sticky Status - Months since last update
 M_UID.ATTR_LAST_CHANGED_DATE = "v6mICtv8rLm"; // Sticky Status - Date last change date
+M_UID.ATTR_IS_ACCREDIT = "v1g9V0kHrUm"; // Sticky Status - Is this an accreditation / authorization log
 
 // ==== Data Elements keywords ====
 M_UID.KEYWORD_DE_STATUS_UNKNOWN = "Status_Unknown"; // Sticky Status - Unknown
@@ -775,6 +776,24 @@ Util.retreiveOrgUnitInOUG = function( queryUrl, returnFunc )
 
 		returnFunc( json_orgUnits );
 	});	
+}
+
+Util.getAttributeVal = function( list, attrId )
+{
+	var val = "";
+
+	for ( var i = 0; i < list.length; i++ )
+	{
+		var item = list[i];
+
+		if ( item.attribute.id === attrId )
+		{
+			val = item.value;				
+			break;
+		}
+	}
+
+	return val;
 }
 
 // ----------------------------------------------

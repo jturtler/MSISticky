@@ -3,11 +3,10 @@
 // - ABOUT:
 //	 For applying the 'MSI Event Form - Accreditation & Authorization Log' logic/processing
 //		per orgUnit & per program.
-//   Programs that has shortName starting with 'MSI20 -' will be considered as 'Accreditation & Authorization Log' program.
+//   Programs that has attribute 'Sticky Status - Is this an accreditation / authorization log' (Uid - v1g9V0kHrUm) checked/marked will be considered as 'Accreditation & Authorization Log' program.
 //	 
 //	 If specific 'ouid' is not provided as parameter, it will run against all orgUnits.
-//	 Same with program - if specific 'program' is not provided, it will run for all program that 
-//	 has shortName starting with 'MSI20 -'.
+//	 Same with program - if specific 'program' is not provided, it will run for all program of this type.
 //
 // - OPERATIONS:
 //		1. Use WebAPI to retrieve programs
@@ -60,7 +59,9 @@ var _logLevel = ( _argvSetObj[ "logLevel" ] !== undefined ) ? Number( _argvSetOb
 // ----- UIDs and Urls -----------
 var _apiUrl = _serverUrl + "/api/";
 
-var _queryUrl_ProgramListWithDE = _apiUrl + 'programs.json?paging=false&fields=id,name,attributeValues[value,attribute[id]]&filter=shortName:like:MSI_20-';
+var _queryUrl_ProgramListWithDE = _apiUrl + 'programs.json?paging=false&fields=id,name,attributeValues[value,attribute[id]]'
+	+ "&filter=attributeValues.attribute.id:eq:" + M_UID.ATTR_IS_ACCREDIT;
+	//+ '&filter=shortName:like:MSI_20-';
 
 var _queryUrl_sqlViewData_EventsData = _apiUrl + 'sqlViews/i3PZx8PUQtd/data.json';
 
@@ -118,12 +119,14 @@ app.run = function()
 				{
 					if ( _program === "ALL" )
 					{
-
 						for ( var i = 0; i < programList.length; i++)
 						{
 							var programData = programList[i];
 
-							app.processProgram( programData );
+							if ( Util.getAttributeVal( programData.attributeValues, M_UID.ATTR_IS_ACCREDIT ) === "true" )
+							{
+								app.processProgram( programData );
+							}
 						}
 					}
 					else
@@ -189,7 +192,7 @@ app.processProgram = function( programData )
 			if ( programId )
 			{
 
-				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>=== Program: ' + programData.id );
+				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '\n <br><br> === Program: ' + programData.name + ' - ' + programId );
 
 				// Retrieve Latest events of orgunits in current month
 				var queryUrl = _queryUrl_sqlViewData_EventsData + '?var=ouid:' + _ouid + '&var=prgid:' + programId + '&var=startDate:' + _startDate + '&var=endDate:' + _endDate + '&var=mode:' + _mode;

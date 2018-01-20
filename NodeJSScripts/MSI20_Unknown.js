@@ -40,7 +40,10 @@ var KEYWORD_UNKNOWN_DEID = "@KEYWORD_UNKNOWN_DEID";
 
 var _apiUrl = _serverUrl + "/api/";
 var _queryUrl_dataValueSet = _apiUrl + 'dataValueSets';
-var _queryUrl_ProgramListWithDE = _apiUrl + 'programs.json?paging=false&fields=id,name,attributeValues[value,attribute[id]]&filter=shortName:like:MSI_20-';
+var _queryUrl_ProgramListWithDE = _apiUrl + 'programs.json?paging=false&fields=id,name,attributeValues[value,attribute[id]]'
+	+ "&filter=attributeValues.attribute.id:eq:" + M_UID.ATTR_IS_ACCREDIT;
+	//+ '&filter=shortName:like:MSI_20-';
+
 var _queryUrl_sqlViewData_Unknown = _apiUrl + 'sqlViews/zDtkWCN7AuF/data.json?var=prgid:' + KEYWORD_PROGRAMID + '&var=unknowndeid:' + KEYWORD_UNKNOWN_DEID;
 //http://localhost:8080/api/sqlViews/SYkTNXsvuIZ/data.json?var=prgid:245008&var=unknowndeid:244959&var=ouid:ALL
 // local: SYkTNXsvuIZ, prod: zDtkWCN7AuF
@@ -98,8 +101,11 @@ app.run = function()
 						for ( var i = 0; i < programList.length; i++)
 						{
 							var programData = programList[i];
-
-							app.processProgram( programData );
+							
+							if ( Util.getAttributeVal( programData.attributeValues, M_UID.ATTR_IS_ACCREDIT ) === "true" )
+							{
+								app.processProgram( programData );
+							}
 						}
 					}
 					else

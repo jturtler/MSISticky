@@ -1,5 +1,5 @@
 {
-    "version":"0.07"
+    "version":"0.08"
     ,"name":"MSI Sticky Data"
     ,"description":"Runs MSI Sticky Project related scripts manually - otherwise scheduled to run once a day"
     ,"launch_path":"index.html"

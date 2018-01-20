@@ -15,7 +15,12 @@ function UpdateStickyDataValue()
 	me.orgUnit;
 	
 	// [ URL ]
-	me._queryURL_ProgramList_20 = _queryURL_api + "programs.json?fields=name,id,attributeValues[value,attribute[id]]&paging=false&filter=shortName:^like:MSI-20-";
+	me.attrId_isAccreditation = "v1g9V0kHrUm";
+
+	me._queryURL_ProgramList_20 = _queryURL_api + "programs.json?fields=name,id,attributeValues[value,attribute[id]]&paging=false" 
+	+ "&filter=attributeValues.attribute.id:eq:" + me.attrId_isAccreditation;
+	// &filter=shortName:^like:MSI-20-";
+	
 	me.KEY_MSI_NODEJS_FILE_PATH = "misnodejsfilepath";
 	
 	me.startDateTag = $("#startDate");
@@ -181,7 +186,7 @@ function UpdateStickyDataValue()
 					for( var i in response.programs )
 					{
 						var program = response.programs[i];
-						if( program.attributeValues !== undefined )
+						if( program.attributeValues !== undefined && me.getAttributeVal( program.attributeValues, me.attrId_isAccreditation ) === "true" )
 						{
 							var optionTag = $("<option value='" + program.id +"' programType='2.0' scriptUnknown='MSI20_Unknown.js' scriptSetData='MSI20_AggUpdate.js'>" + program.name + "</option>");
 							me.programsTag.append( optionTag );
@@ -194,6 +199,25 @@ function UpdateStickyDataValue()
 			});
 		
 	};
+
+
+	me.getAttributeVal = function( list, attrId )
+	{
+		var val = "";
+
+		for ( var i = 0; i < list.length; i++ )
+		{
+			var item = list[i];
+
+			if ( item.attribute.id === attrId )
+			{
+				val = item.value;				
+				break;
+			}
+		}
+
+		return val;
+	}
 	
 	// Load meta data
 	// ------------------------------------------------------------------------------------
