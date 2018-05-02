@@ -1,1 +1,0 @@
-{ "dhis": {"user": "---", "password": "---"}, "jsFile": "https://sandbox.orion.mariestopes.org/js/js_StickyUtil.js" }

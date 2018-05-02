@@ -20,9 +20,10 @@
 
 var urlsync = require('urllib-sync');
 var fs = require('fs');
-var settingLoc = '/tmp/nodejs/setting.txt';
-var settingLoc2 = 'setting.txt';
-var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
+var settingObj = require( './setting' );
+//var settingLoc = '/msi_nodejs/nodejs/setting.txt';
+//var settingLoc2 = 'setting.txt';
+//var settingObj = JSON.parse( (fs.existsSync(settingLoc)) ? fs.readFileSync(settingLoc, 'utf8') : fs.readFileSync(settingLoc2, 'utf8') ); 
 eval( urlsync.request( settingObj.jsFile, {timeout: 600000} ).data.toString( 'utf8' )+'' );
 
 RESTUtil.options = { auth: settingObj.dhis.user + ':' + settingObj.dhis.password, timeout: 600000 };
