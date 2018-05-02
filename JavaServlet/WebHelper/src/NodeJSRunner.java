@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONObject;
+
 /**
  * Servlet implementation class DemoServlet
  */
@@ -48,18 +50,29 @@ public class NodeJSRunner extends HttpServlet {
 				outputMsg = "node name is emtpy";
 			}
 			else
-			{	
+			{
+				JSONObject configJson = Util.loadSetConfigData( getServletContext() );
+				
+				String configNodeJsFileLoc = Util.getJSONStrVal( configJson, "NODEJS_FILELOC_DEFAULT" );
+				String defaultNodeJsFileLoc = ( configNodeJsFileLoc.isEmpty() ) ? "/tmp/nodejs/" : configNodeJsFileLoc ;
+				
+				String fileLocStr = getParam( request, "fileLoc" );
+				System.out.println( "\n= = = = = = = param fileLocStr: " + fileLocStr + ", configNodeJsFileLoc: " + configNodeJsFileLoc );
+				
+				
+				
 				// STEP 1. Compose 'node ---' execute command with parameters
 				String nodeJSNameWtExtension = nodeJSName.replaceFirst(".js", "_");
 				
 				// get url parameters as '[---]:--' type, with exception of -> node/fileLoc/... used at here.
 				String nodeParameterStr = parseNodeJSParams( request );
 
-				String locDirStr = ( !getParam( request, "fileLoc" ).isEmpty() ) ? getParam( request, "fileLoc" ) : "/tmp/nodejs/";
+				String locDirStr = ( !fileLocStr.isEmpty() ) ? fileLocStr : defaultNodeJsFileLoc;
 
 				String executeStatement = locDirStr + nodeJSName + nodeParameterStr;
 				//String executeStatement = "node /tmp/nodejs/" + nodeJSName + nodeParameterStr;
 
+				System.out.println( "\n= = = = = = = executeStatement: " + executeStatement );
 
 				// STEP 2. Optional output log file and background processing
 				if ( getParam( request, "withLog" ).equals( "Y" ) ) executeStatement += " > " + locDirStr + nodeJSNameWtExtension + "_log.txt";
@@ -68,8 +81,10 @@ public class NodeJSRunner extends HttpServlet {
 				
 				if ( getParam( request, "bgProcess" ).equals( "Y" ) ) 
 				{
-					String cmd = "/bin/sh /tmp/nodejs/runner.sh " + executeStatement;				
-					
+					String cmd = "/bin/sh " + locDirStr + "runner.sh " + executeStatement;				
+
+					System.out.println( "\n= = = = = = = bgProcess cmd: " + cmd );
+
 					// STEP 4. Set for displaying the 'executeStatement' on web as return output
 					// And Execute the command.
 					//if ( getParam( request, "showMsg" ).equals( "Y" ) ) outputMsg += "Execute: " + executeStatement;
@@ -81,7 +96,9 @@ public class NodeJSRunner extends HttpServlet {
 					//String[] cmd = {"/bin/sh", "-c", executeStatement};				
 					//String cmd = "/bin/sh -c " + executeStatement;				
 					String cmd = "/usr/bin/node " + executeStatement;				
-					
+
+					System.out.println( "\n= = = = = = = cmd: " + cmd );
+
 					// STEP 4. Set for displaying the 'executeStatement' on web as return output
 					// And Execute the command.
 					//if ( getParam( request, "showMsg" ).equals( "Y" ) ) outputMsg += "Execute: " + executeStatement;
