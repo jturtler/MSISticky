@@ -5,16 +5,16 @@
 *.log
 
 # Package Files #
-*.jar
-*.war
+#*.jar
+#*.war
 *.ear
 *.zip
 *.tar.gz
 *.rar
 
 # Custom List
-.classpath
-.project
+#.classpath
+#.project
 .settings
 build
-config.json
+#config.json
