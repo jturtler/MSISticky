@@ -1,0 +1,166 @@
+{
+"system": {
+"id": "1dc950a6-23ae-43fd-8e28-9c5b99b75a36",
+"rev": "9b2e099",
+"version": "2.25",
+"date": "2018-05-05T04:22:25.139"
+},
+"sqlViews": [
+{
+"created": "2017-04-25T15:31:18.641",
+"lastUpdated": "2017-05-09T04:03:53.354",
+"name": "MSI_StausLogAndSegmentation",
+"id": "ZEMbfPLazaI",
+"sqlQuery": "select DISTINCT( org.uid )\r\nfrom organisationunit org\r\ninner join program_organisationunits prgorg on org.organisationunitid=prgorg.organisationunitid\r\ninner join program prg on prg.programid=prgorg.programid\r\n\r\nwhere prg.uid='${programid}'\r\n\r\nand org.organisationunitid not in \r\n( select organisationunitid \r\nfrom programstageinstance psi \r\ninner join programstage prgstage on psi.programstageid=prgstage.programstageid \r\nwhere prgstage.uid='${stageid}' )",
+"description": "",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-05-09T04:05:10.139",
+"lastUpdated": "2017-05-09T04:05:10.139",
+"name": "MSI_StausLogAndSegmentation_WithParams",
+"id": "AUCwBlRxf2k",
+"sqlQuery": "select DISTINCT( org.uid )\r\nfrom organisationunit org\r\ninner join program_organisationunits prgorg on org.organisationunitid=prgorg.organisationunitid\r\ninner join program prg on prg.programid=prgorg.programid\r\n\r\nwhere prg.uid='${programid}'\r\n\r\nand org.organisationunitid not in \r\n( select organisationunitid \r\nfrom programstageinstance psi \r\ninner join programstage prgstage on psi.programstageid=prgstage.programstageid \r\nwhere prgstage.uid='${stageid}' )\r\n\r\nand org.uid = '${ouId}'",
+"description": "",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-06-19T09:35:41.349",
+"lastUpdated": "2017-06-20T03:58:50.796",
+"name": "MSI_StausLogUnknown",
+"id": "SYkTNXsvuIZ",
+"sqlQuery": "select ou.uid, 'aggr' as \"type\", dv.value as \"value\", prgorg.programid as \"prgrel\"\r\nfrom datavalue as dv\r\n  inner join period as p\r\n    on p.periodid = dv.periodid \r\n      and p.periodtypeid = 3 \r\n  inner join organisationunit as ou\r\n    on ou.organisationunitid = dv.sourceid\r\n\r\n  left outer join program_organisationunits as prgorg\r\n    on ou.organisationunitid = prgorg.organisationunitid\r\n\tand prgorg.programid = 245008\r\n      \r\nwhere dv.dataelementid = 244959\r\n and p.startdate = to_date( to_char( current_timestamp, 'YYYY-MM' ) || '-01', 'YYYY-MM-DD')\r\n AND ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n\r\n-- ABOVE: Aggregate data - with 'unknown' status and 'program relationship' - values: 0, 1, ''\r\n\r\nUNION ALL\r\n\r\n-- Events Count on orgUnits in the program\r\nselect ou.uid, 'event' as \"type\", CAST( count(psi.programstageinstanceid) as text ) as \"value\", prgorg.programid as \"prgrel\"\r\nfrom organisationunit as ou\r\n  inner join program_organisationunits prgorg \r\n    on ou.organisationunitid = prgorg.organisationunitid\r\n\tand prgorg.programid = 245008\r\n\r\n  inner join programstage as ps\r\n    on prgorg.programid = ps.programid\r\n\r\n  left outer join programstageinstance as psi \r\n    on psi.programstageid = ps.programstageid\r\n      and psi.organisationunitid = ou.organisationunitid\r\n\r\nwhere ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n\r\ngroup by ou.uid, prgorg.programid\r\n\r\norder by type, value;\r\n",
+"description": "Unknown related data combined from aggregate and event.",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-06-29T21:27:55.510",
+"lastUpdated": "2017-07-04T09:05:43.627",
+"name": "MSI_StickyScript_11_Events",
+"id": "IElcYd2UtZJ",
+"sqlQuery": "select psi.uid\r\n , ou.uid\r\n , to_char( psi.executiondate,'YYYYMM')\r\n , psi.executiondate  --- ?? eventdate?\r\n , psi.programstageid\r\n\r\n , prevSts.value as \"prevSts\"\r\n , newSts.value as \"newSts\"\r\n , elapsDate.value as \"elapsDate\"\r\n , noteData.value as \"noteData\"\r\n\r\nfrom programstageinstance as psi\r\n  inner join organisationunit ou\r\n    on ou.organisationunitid = psi.organisationunitid\r\n\r\n  inner join programstage as ps\r\n    on psi.programstageid = ps.programstageid\r\n\r\n  inner join program as prg\r\n    on ps.programid = prg.programid\r\n      and prg.uid = '${prgid}'\r\n      \r\n  left outer join trackedentitydatavalue as prevSts\r\n    on psi.programstageinstanceid = prevSts.programstageinstanceid\r\n      and prevSts.dataelementid = 786150\r\n      \r\n  left outer join trackedentitydatavalue as newSts\r\n    on psi.programstageinstanceid = newSts.programstageinstanceid\r\n      and newSts.dataelementid = 244950\r\n\r\n  left outer join trackedentitydatavalue as elapsDate\r\n    on psi.programstageinstanceid = elapsDate.programstageinstanceid\r\n      and elapsDate.dataelementid = 786151\r\n\r\n  left outer join trackedentitydatavalue as noteData\r\n    on psi.programstageinstanceid = noteData.programstageinstanceid\r\n      and noteData.dataelementid = 244949\r\n\r\nwhere ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n\r\norder by ou.uid, psi.executiondate;",
+"description": "",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-06-29T21:28:44.179",
+"lastUpdated": "2017-12-14T20:54:29.980",
+"name": "MSI_StickyScript_12_Events",
+"id": "VBbWciUfbDf",
+"sqlQuery": "select psi.uid\r\n , ou.uid\r\n , to_char( psi.executiondate,'YYYYMM')\r\n , psi.executiondate  --- ?? eventdate?\r\n , psi.programstageid\r\n\r\n , prevSts.value as \"prevSts\"\r\n , newSts.value as \"newSts\"\r\n , elapsDate.value as \"elapsDate\"\r\n , noteData.value as \"noteData\"\r\n\r\n , prevSubSts.value as \"prevSubSts\"\r\n , newSubSts.value as \"newSubSts\"\r\n\r\nfrom programstageinstance as psi\r\n  inner join organisationunit ou\r\n    on ou.organisationunitid = psi.organisationunitid\r\n\r\n  inner join programstage as ps\r\n    on psi.programstageid = ps.programstageid\r\n\r\n  inner join program as prg\r\n    on ps.programid = prg.programid\r\n      and prg.uid = '${prgid}'\r\n      \r\n  left outer join trackedentitydatavalue as prevSts\r\n    on psi.programstageinstanceid = prevSts.programstageinstanceid\r\n      and prevSts.dataelementid = 786154\r\n\r\n  left outer join trackedentitydatavalue as prevSubSts\r\n    on psi.programstageinstanceid = prevSubSts.programstageinstanceid\r\n      and prevSubSts.dataelementid = 2869137\r\n      \r\n  left outer join trackedentitydatavalue as newSts\r\n    on psi.programstageinstanceid = newSts.programstageinstanceid\r\n      and newSts.dataelementid = 244951\r\n\r\n  left outer join trackedentitydatavalue as newSubSts\r\n    on psi.programstageinstanceid = newSubSts.programstageinstanceid\r\n      and newSubSts.dataelementid = 2869119\r\n\r\n  left outer join trackedentitydatavalue as elapsDate\r\n    on psi.programstageinstanceid = elapsDate.programstageinstanceid\r\n      and elapsDate.dataelementid = 786151\r\n\r\n  left outer join trackedentitydatavalue as noteData\r\n    on psi.programstageinstanceid = noteData.programstageinstanceid\r\n      and noteData.dataelementid = 244949\r\n\r\nwhere ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n\r\norder by ou.uid, psi.executiondate;",
+"description": "",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-06-26T02:29:26.256",
+"lastUpdated": "2017-07-10T04:06:12.581",
+"name": "MSI_StickyScript_Accreditations",
+"id": "i3PZx8PUQtd",
+"sqlQuery": "select psi.uid\r\n , ou.uid\r\n , to_char( psi.executiondate,'YYYYMM')\r\n , psi.executiondate  --- ?? eventdate?\r\n , stsdata.value\r\n , expdate.value\r\n , psi.programstageid\r\n , ( select count(*) \r\n    from programstageinstance as t_psi \r\n    where t_psi.executiondate > psi.executiondate \r\n      and t_psi.organisationunitid = psi.organisationunitid\r\n      and t_psi.programstageid = psi.programstageid ) AS \"laterEvents\"\r\n\r\nfrom programstageinstance as psi\r\n  inner join organisationunit ou\r\n    on ou.organisationunitid = psi.organisationunitid\r\n\r\n  inner join programstage as ps\r\n    on psi.programstageid = ps.programstageid\r\n\r\n  inner join program as prg\r\n    on ps.programid = prg.programid\r\n      and prg.uid = '${prgid}'\r\n--      and prg.uid = 'qaT1muhnoR2'\r\n      \r\n  left outer join trackedentitydatavalue as stsdata\r\n    on psi.programstageinstanceid = stsdata.programstageinstanceid\r\n      and stsdata.dataelementid = 244952\r\n      \r\n  left outer join trackedentitydatavalue as expdate\r\n    on psi.programstageinstanceid = expdate.programstageinstanceid\r\n      and expdate.dataelementid = 244953\r\n\r\nwhere ( '${startDate}' = 'ALL' OR psi.executiondate >= to_timestamp( '${startDate}', 'YYYY-MM-DD' ) ) \r\n and ( '${endDate}' = 'ALL' OR psi.executiondate <= to_timestamp( '${endDate}', 'YYYY-MM-DD' ) ) \r\n and ( '${mode}' <> '3Days' OR ( current_timestamp - interval '3 days' ) <= psi.lastupdated )\r\n and ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n--  and ( ou.uid = 'tyogguMf4CI' )\r\n\r\norder by ou.uid, psi.executiondate;",
+"description": "MSI Sticky Script sqlView Data - for Accreditation / Authorized - for getting events",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-09-26T22:10:43.993",
+"lastUpdated": "2017-12-13T23:33:42.172",
+"name": "MSI_StickyScript_DataSearch",
+"id": "PgVKlgcVLUt",
+"sqlQuery": "select p.startdate, p.enddate\r\nfrom datavalue as dv\r\n  inner join organisationunit as ou\r\n    on dv.sourceid = ou.organisationunitid\r\n  inner join dataelement as de\r\n    on dv.dataelementid = de.dataelementid\r\n  inner join period as p\r\n    on dv.periodid = p.periodid\r\nwhere ou.uid = '${ouid}'\r\nand de.uid = '${deid}'\r\nand deleted = false\r\nand ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) \r\nand ( '${endDate}' = 'ALL' OR p.startdate <= to_date( '${endDate}', 'YYYY-MM-DD' ) ) \r\norder by p.startdate;",
+"description": "Search data value for period",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-12-28T18:18:31.011",
+"lastUpdated": "2018-01-02T01:30:02.559",
+"name": "MSI_StickyScript_DataSearch_Form11",
+"id": "GnPIvGzQU7G",
+"sqlQuery": "select distinct p.startdate, p.enddate\r\nfrom datavalue as dv\r\n  inner join organisationunit as ou\r\n    on dv.sourceid = ou.organisationunitid\r\n  inner join dataelement as de\r\n    on dv.dataelementid = de.dataelementid\r\n  inner join period as p\r\n    on dv.periodid = p.periodid\r\nwhere ou.uid = '${ouid}'\r\nand de.uid in ( 'K7wCU6apTwc', 'DS6lHr4eEnw', 'In8fazkWqO5', 'otjftbeXFW2', 'By1ehX6g7Iv', 'o0i2ESQppT5', 'R3JYgPw22T2', 'CSQts1sZhE9', 'uSpx4DHdae6', 'RpslYBBLJ2Q', 'n1gp668Y4Hq', 'ap3kA4OU2UO', 'gtRZqUPY4r0' )\r\nand deleted = false\r\nand ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) \r\nand ( '${endDate}' = 'ALL' OR p.startdate <= to_date( '${endDate}', 'YYYY-MM-DD' ) ) \r\norder by p.startdate;",
+"description": "Search data value for period, with multiple data element for form 1.1 ",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-12-28T18:24:21.023",
+"lastUpdated": "2018-01-02T01:30:02.559",
+"name": "MSI_StickyScript_DataSearch_Form12",
+"id": "WFnFbxx9aMC",
+"sqlQuery": "select distinct p.startdate, p.enddate\r\nfrom datavalue as dv\r\n  inner join organisationunit as ou\r\n    on dv.sourceid = ou.organisationunitid\r\n  inner join dataelement as de\r\n    on dv.dataelementid = de.dataelementid\r\n  inner join period as p\r\n    on dv.periodid = p.periodid\r\nwhere ou.uid = '${ouid}'\r\nand de.uid in ( 'IXd6OFCZAfl', 'lwhzwU6nrJh', 'RDAsWi4QOmo', 'Mo76PCg8nZf', 'WlwUwXL7zjg', 'GZYmBByQIpc', 'pPusa1XgLvR', 'gzItNuOawEm', 'TvP8vLtLokJ', 'cpcwuFL4P63', 'n6ebQdtTEg0', 'mB0Z390lvLE', 'DmGOQFmcuqf', 'h0RirtCDuE6', 'jLevV7SYpaY', 'DRvlWf9T4tg', 'hXLyGfE2sFi', 'k0Ws0xA2vDj' )\r\nand deleted = false\r\nand ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) \r\nand ( '${endDate}' = 'ALL' OR p.startdate <= to_date( '${endDate}', 'YYYY-MM-DD' ) ) \r\norder by p.startdate;",
+"description": "Search data value for period, with multiple data element for form 1.2",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-12-28T19:02:23.631",
+"lastUpdated": "2018-01-02T01:30:02.559",
+"name": "MSI_StickyScript_DataSearch_Form20",
+"id": "BpSi9iZ1mdb",
+"sqlQuery": "select distinct p.startdate, p.enddate\r\nfrom datavalue as dv\r\n  inner join organisationunit as ou\r\n    on dv.sourceid = ou.organisationunitid\r\n  inner join dataelement as de\r\n    on dv.dataelementid = de.dataelementid\r\n  inner join period as p\r\n    on dv.periodid = p.periodid\r\nwhere ou.uid = '${ouid}'\r\nand de.uid in ( select av.value\r\n    from program as p\r\n    inner join programattributevalues as pav\r\n    on pav.programid = p.programid\r\n    inner join attributevalue as av\r\n    on av.attributevalueid = pav.attributevalueid\r\n    where uid = '${prgid}' )\r\nand deleted = false\r\nand ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) \r\nand ( '${endDate}' = 'ALL' OR p.startdate <= to_date( '${endDate}', 'YYYY-MM-DD' ) ) \r\norder by p.startdate;",
+"description": "Search data value for period, with multiple data element for form 20",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-12-31T19:53:03.116",
+"lastUpdated": "2018-01-02T01:31:24.091",
+"name": "MSI_StickyScript_OrgUnitInOUG_Form1",
+"id": "Fu3Wc9pt112",
+"sqlQuery": "select ou.uid as ouid, oug.uid as ougid\r\nfrom orgunitgroup as oug\r\n  inner join orgunitgroupmembers as ougm\r\n    on oug.orgunitgroupid = ougm.orgunitgroupid\r\n  inner join organisationunit as ou\r\n    on ougm.organisationunitid = ou.organisationunitid\r\nwhere oug.uid in ( 'bieIPjDl9rK', 'InJBtUUZy2c', 'f2sBZWvPAAM', 'jyhbiSfzbU5' );",
+"description": "List orgUnits in orgUnitGroup related to form 1",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-12-31T19:53:52.625",
+"lastUpdated": "2018-01-02T01:31:24.091",
+"name": "MSI_StickyScript_OrgUnitInOUG_Form2",
+"id": "Sou7m9Ptwec",
+"sqlQuery": "select ou.uid as ouid, oug.uid as ougid\r\nfrom orgunitgroup as oug\r\n  inner join orgunitgroupmembers as ougm\r\n    on oug.orgunitgroupid = ougm.orgunitgroupid\r\n  inner join organisationunit as ou\r\n    on ougm.organisationunitid = ou.organisationunitid\r\nwhere oug.uid in ( 'VgUniUYGInI', 'h90V7SLY1bm', 'dgJIod9A9Zz', 'ZFY5dg0Cr3N', 'Jw7MSDwSY8O' );",
+"description": "List orgUnits in orgUnitGroup related to form 2",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+},
+{
+"created": "2017-06-26T02:25:55.042",
+"lastUpdated": "2017-09-27T03:14:47.293",
+"name": "MSI_StickyScript_Unknown",
+"id": "zDtkWCN7AuF",
+"sqlQuery": "select ou.uid, 'aggr' as \"type\", dv.value as \"value\", prgorg.programid as \"prgrel\"\r\nfrom datavalue as dv\r\n  inner join period as p\r\n    on p.periodid = dv.periodid \r\n      and p.periodtypeid = 3 \r\n  inner join organisationunit as ou\r\n    on ou.organisationunitid = dv.sourceid\r\n\r\n  inner join dataelement as de\r\n    on dv.dataelementid = de.dataelementid\r\n\r\n  left outer join program_organisationunits as prgorg\r\n    on ou.organisationunitid = prgorg.organisationunitid\r\n    and prgorg.programid = (select programid from program where uid = '${prgid}')\r\n      \r\nwhere de.uid = '${unknowndeid}'\r\n AND p.startdate = to_date( '${startDate}', 'YYYY-MM-DD' )\r\n AND ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n AND dv.deleted = false\r\n-- ABOVE: Aggregate data - with 'unknown' status and 'program relationship' - values: 0, 1, ''\r\n\r\nUNION ALL\r\n\r\n-- Events Count on orgUnits in the program\r\nselect ou.uid, 'event' as \"type\", CAST( count(psi.programstageinstanceid) as text ) as \"value\", prgorg.programid as \"prgrel\"\r\nfrom organisationunit as ou\r\n  inner join program_organisationunits prgorg \r\n    on ou.organisationunitid = prgorg.organisationunitid\r\n\r\n  inner join program as prg\r\n    on prgorg.programid = prg.programid\r\n      and prg.uid = '${prgid}'\r\n\t\r\n  inner join programstage as ps\r\n    on prgorg.programid = ps.programid\r\n\r\n  left outer join programstageinstance as psi \r\n    on psi.programstageid = ps.programstageid\r\n      and psi.organisationunitid = ou.organisationunitid\r\n\r\nwhere ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )\r\n\r\ngroup by ou.uid, prgorg.programid\r\n\r\norder by type, value;",
+"description": "",
+"type": "QUERY",
+"externalAccess": false,
+"cacheStrategy": "RESPECT_SYSTEM_SETTING",
+"attributeValues": []
+}
+]
+}
