@@ -25,11 +25,12 @@ from programstageinstance as psi
       
   left outer join trackedentitydatavalue as stsdata
     on psi.programstageinstanceid = stsdata.programstageinstanceid
-      and stsdata.dataelementid = 244952
+      and stsdata.dataelementid = (select dataelementid from dataelement where uid = 'Ilc4iUWAoGo' limit 1 ) --  244952
       
   left outer join trackedentitydatavalue as expdate
     on psi.programstageinstanceid = expdate.programstageinstanceid
-      and expdate.dataelementid = 244953
+      and expdate.dataelementid = (select dataelementid from dataelement where uid = 'aKFgqbuX0gi' limit 1 ) --  244953
+
 
 where ( '${startDate}' = 'ALL' OR psi.executiondate >= to_timestamp( '${startDate}', 'YYYY-MM-DD' ) ) 
  and ( '${endDate}' = 'ALL' OR psi.executiondate <= to_timestamp( '${endDate}', 'YYYY-MM-DD' ) ) 

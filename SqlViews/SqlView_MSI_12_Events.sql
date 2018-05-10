@@ -25,27 +25,27 @@ from programstageinstance as psi
       
   left outer join trackedentitydatavalue as prevSts
     on psi.programstageinstanceid = prevSts.programstageinstanceid
-      and prevSts.dataelementid = 786154
+      and prevSts.dataelementid = (select dataelementid from dataelement where uid = 'T2iHkAEidOd' limit 1 ) --  786154
 
   left outer join trackedentitydatavalue as prevSubSts
     on psi.programstageinstanceid = prevSubSts.programstageinstanceid
-      and prevSubSts.dataelementid = 2869137
+      and prevSubSts.dataelementid = (select dataelementid from dataelement where uid = 'Lwugb7O0coU' limit 1 ) --  2869137
       
   left outer join trackedentitydatavalue as newSts
     on psi.programstageinstanceid = newSts.programstageinstanceid
-      and newSts.dataelementid = 244951
+      and newSts.dataelementid = (select dataelementid from dataelement where uid = 'wYoGZDnvu3n' limit 1 ) --  244951
 
   left outer join trackedentitydatavalue as newSubSts
     on psi.programstageinstanceid = newSubSts.programstageinstanceid
-      and newSubSts.dataelementid = 2869119
+      and newSubSts.dataelementid = (select dataelementid from dataelement where uid = 'DwXW311h36K' limit 1 ) --  2869119
 
   left outer join trackedentitydatavalue as elapsDate
     on psi.programstageinstanceid = elapsDate.programstageinstanceid
-      and elapsDate.dataelementid = 786151
+      and elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
 
   left outer join trackedentitydatavalue as noteData
     on psi.programstageinstanceid = noteData.programstageinstanceid
-      and noteData.dataelementid = 244949
+      and noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
 
 where ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )
 
