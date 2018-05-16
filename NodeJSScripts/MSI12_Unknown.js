@@ -35,8 +35,6 @@ var _apiUrl = _serverUrl + "/api/";
 
 
 var _queryUrl_sqlViewData_Unknown = _apiUrl + 'sqlViews/zDtkWCN7AuF/data.json?var=prgid:' +  M_UID.PROGRAM_ID_SEG + '&var=unknowndeid:' +  M_UID.AGG_DE_SEGMENTATION_UNKNOWN;
-//http://localhost:8080/api/sqlViews/SYkTNXsvuIZ/data.json?var=prgid:245275&var=unknowndeid:244970&var=ouid:ALL
-// local: SYkTNXsvuIZ, prod: zDtkWCN7AuF
 
 var _queryUrl_dataValueSet_ADD_UPDATE = _apiUrl + 'dataValueSets';
 var _queryUrl_dataValueSet_DELETE = _apiUrl + 'dataValueSets?importStrategy=DELETE';

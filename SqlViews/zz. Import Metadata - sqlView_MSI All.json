@@ -29,18 +29,6 @@
       "attributeValues": []
     },
     {
-      "created": "2017-06-19T09:35:41.349",
-      "lastUpdated": "2018-05-10T08:35:10.181",
-      "name": "MSI_StausLogUnknown",
-      "id": "SYkTNXsvuIZ",
-      "sqlQuery": "select ou.uid, 'aggr' as \"type\", dv.value as \"value\", prgorg.programid as \"prgrel\"\r\nfrom datavalue as dv\r\n  inner join period as p\r\n    on p.periodid = dv.periodid \r\n      and p.periodtypeid = 3 \r\n  inner join organisationunit as ou\r\n    on ou.organisationunitid = dv.sourceid\r\n\r\n  left outer join program_organisationunits as prgorg\r\n    on ou.organisationunitid = prgorg.organisationunitid\r\n\tand prgorg.programid = (select programid from program where uid = 'i8IL2nSOkKX' limit 1 ) -- 245008\r\n\r\nwhere dv.dataelementid = (select dataelementid from dataelement where uid = 'By1ehX6g7Iv' limit 1 ) -- 244959\r\n and p.startdate = to_date( to_char( current_timestamp, 'YYYY-MM' ) || '-01', 'YYYY-MM-DD')\r\n AND ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )\r\n\r\n-- ABOVE: Aggregate data - with 'unknown' status and 'program relationship' - values: 0, 1, ''\r\n\r\nUNION ALL\r\n\r\n-- Events Count on orgUnits in the program\r\nselect ou.uid, 'event' as \"type\", CAST( count(psi.programstageinstanceid) as text ) as \"value\", prgorg.programid as \"prgrel\"\r\nfrom organisationunit as ou\r\n  inner join program_organisationunits prgorg \r\n    on ou.organisationunitid = prgorg.organisationunitid\r\n\tand prgorg.programid = (select programid from program where uid = 'i8IL2nSOkKX' limit 1 ) -- 245008\r\n\r\n  inner join programstage as ps\r\n    on prgorg.programid = ps.programid\r\n\r\n  left outer join programstageinstance as psi \r\n    on psi.programstageid = ps.programstageid\r\n      and psi.organisationunitid = ou.organisationunitid\r\n\r\nwhere ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )\r\n\r\ngroup by ou.uid, prgorg.programid\r\n\r\norder by type, value;\r\n",
-      "description": "Unknown related data combined from aggregate and event.",
-      "type": "QUERY",
-      "externalAccess": false,
-      "cacheStrategy": "RESPECT_SYSTEM_SETTING",
-      "attributeValues": []
-    },
-    {
       "created": "2017-06-29T21:27:55.510",
       "lastUpdated": "2018-05-10T08:11:27.977",
       "name": "MSI_StickyScript_11_Events",

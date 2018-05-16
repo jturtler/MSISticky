@@ -39,9 +39,8 @@ var _apiUrl = _serverUrl + "/api/";
 //var _deTableId_unknown = 244959;
 
 var _queryUrl_sqlViewData_Unknown = _apiUrl + 'sqlViews/zDtkWCN7AuF/data.json?var=prgid:' + M_UID.PROGRAM_ID_STATUS + '&var=unknowndeid:' + M_UID.AGG_DE_FRANCHISEE_UNKNOWN;
-//http://localhost:8080/api/sqlViews/SYkTNXsvuIZ/data.json?var=prgid:245008&var=unknowndeid:244959&var=ouid:ALL
 //http://localhost:8080/api/sqlViews/zDtkWCN7AuF/data.json?var=prgid:i8IL2nSOkKX&var=unknowndeid:By1ehX6g7Iv&var=ouid:ALL&var=startDate:2017-01-01
-// local: SYkTNXsvuIZ, prod: zDtkWCN7AuF
+
 var _queryUrl_sqlViewData_DataSearch = _apiUrl + 'sqlViews/PgVKlgcVLUt/data.json?var=ouid:[ouid]&var=deid:[deid]';
 
 var _queryUrl_dataValueSet_ADD_UPDATE = _apiUrl + 'dataValueSets';

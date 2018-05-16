@@ -46,8 +46,6 @@ var _queryUrl_ProgramListWithDE = _apiUrl + 'programs.json?paging=false&fields=i
 	//+ '&filter=shortName:like:MSI_20-';
 
 var _queryUrl_sqlViewData_Unknown = _apiUrl + 'sqlViews/zDtkWCN7AuF/data.json?var=prgid:' + KEYWORD_PROGRAMID + '&var=unknowndeid:' + KEYWORD_UNKNOWN_DEID;
-//http://localhost:8080/api/sqlViews/SYkTNXsvuIZ/data.json?var=prgid:245008&var=unknowndeid:244959&var=ouid:ALL
-// local: SYkTNXsvuIZ, prod: zDtkWCN7AuF
 
 var _queryUrl_dataValueSet_ADD_UPDATE = _apiUrl + 'dataValueSets';
 var _queryUrl_dataValueSet_DELETE = _apiUrl + 'dataValueSets?importStrategy=UPDATE';
