@@ -35,7 +35,7 @@ from programstageinstance as psi
 where ( '${startDate}' = 'ALL' OR psi.executiondate >= to_timestamp( '${startDate}', 'YYYY-MM-DD' ) ) 
  and ( '${endDate}' = 'ALL' OR psi.executiondate <= to_timestamp( '${endDate}', 'YYYY-MM-DD' ) ) 
  and ( '${mode}' <> '3Days' OR ( current_timestamp - interval '3 days' ) <= psi.lastupdated )
- and ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )
+ and ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )
 --  and ( ou.uid = 'tyogguMf4CI' )
 
 order by ou.uid, psi.executiondate;

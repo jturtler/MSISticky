@@ -36,6 +36,6 @@ from programstageinstance as psi
     on psi.programstageinstanceid = noteData.programstageinstanceid
       and noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
 
-where ( '${ouid}' = 'ALL' OR ou.uid = '${ouid}' )
+where ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )
 
 order by ou.uid, psi.executiondate;
