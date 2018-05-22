@@ -1,0 +1,6 @@
+in the /msi_nodejs/nodejs folder:
+
+all files should be owned by user tomcat (chown -R tomcat /msi_nodesjs)
+*.js files   --> they probably shouldn't have executable permission (chmod 644 *.js)
+runner.sh --> it should only be executable by the owner while readable by others: (chmod 744 runner.sh)
+setting.json --> this has credentials - should only be readable by the owner, so (chmod 600 settings.json)
