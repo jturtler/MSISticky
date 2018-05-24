@@ -341,7 +341,7 @@ app.submitDataToAggr = function( dataJson )
 	
 	// Add Aggr Data 24 periods
 	var deListObj = {};
-	deListObj[ M_UID.AGG_DE_SEGMENTATION_UNKNOWN ] = "0";
+	deListObj[ M_UID.AGG_DE_SEGMENTATION_UNKNOWN ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_UNKNOWN);
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_A ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_A);
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_B ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_B);
 	deListObj[ M_UID.AGG_DE_SEGMENTATION_C ] = Util.get10_Bool(sts === M_UID.SEGMENTATION_CODE_C);

@@ -1,7 +1,7 @@
 select psi.uid
  , ou.uid
- , to_char( psi.executiondate,'YYYYMM')
- , psi.executiondate  --- ?? eventdate?
+ , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701')
+ , coalesce(psi.executiondate,'2017-01-01 00:00:00.0')  -- eventdate
  , psi.programstageid
 
  , prevSts.value as "prevSts"
@@ -9,17 +9,22 @@ select psi.uid
  , elapsDate.value as "elapsDate"
  , noteData.value as "noteData"
 
-from programstageinstance as psi
-  inner join organisationunit ou
-    on ou.organisationunitid = psi.organisationunitid
+from organisationunit ou
+
+  inner join program_organisationunits as prgorg
+    on prgorg.organisationunitid = ou.organisationunitid
+    and prgorg.programid = (select programid from program where uid = '${prgid}')
+
+  inner join program p 
+    on p.programid = prgorg.programid 
 
   inner join programstage as ps
-    on psi.programstageid = ps.programstageid
+    on p.programid = ps.programid
+  
+  left outer join programstageinstance as psi
+    on psi.organisationunitid = ou.organisationunitid 
+      and psi.programstageid = ps.programstageid  
 
-  inner join program as prg
-    on ps.programid = prg.programid
-      and prg.uid = '${prgid}'
-      
   left outer join trackedentitydatavalue as prevSts
     on psi.programstageinstanceid = prevSts.programstageinstanceid
       and prevSts.dataelementid = (select dataelementid from dataelement where uid = 'k95lcIlS4bv' limit 1 ) --786150
@@ -36,6 +41,6 @@ from programstageinstance as psi
     on psi.programstageinstanceid = noteData.programstageinstanceid
       and noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
 
-where ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )
+where ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
 
 order by ou.uid, psi.executiondate;
