@@ -161,6 +161,8 @@ M_UID.OUG_UID_SEGMENTATION_D1 = "lQfFa7sohBT";
 M_UID.OUG_UID_SEGMENTATION_D2 = "SWIUrFEvpQN";
 M_UID.OUG_UID_SEGMENTATION_D3 = "qDCqiWmf3IE";
 M_UID.OUG_UID_SEGMENTATION_D4 = "rl9mPY1Ni3U";
+M_UID.OUG_UID_SUBSEGMENTATION_UNKNOWN = "UCVDrJsryEN";
+M_UID.OUG_UID_SUBSEGMENTATION_DISENFRANCHISE = "DqoKpamofwj";
 
 // ==== CODE ====
 M_UID.SEGMENTATION_CODE_A = "A";
@@ -1127,8 +1129,8 @@ OUGroupUtil.setOUGroups_SegLog_WithSub = function( ouid, status, subStatus, apiU
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_B, ( status === M_UID.SEGMENTATION_CODE_B ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_C, ( status === M_UID.SEGMENTATION_CODE_C ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D, ( status === M_UID.SEGMENTATION_CODE_D ), apiUrl );
-	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_UNKNOWN, ( status === M_UID.SEGMENTATION_CODE_UNKNOWN ), apiUrl );
-	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SUBSEGMENTATION_UNKNOWN, ( status === M_UID.SEGMENTATION_CODE_UNKNOWN ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SUBSEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
 }
 
 /*
