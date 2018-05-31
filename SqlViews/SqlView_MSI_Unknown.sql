@@ -38,7 +38,7 @@ from organisationunit as ou
     on psi.programstageid = ps.programstageid
       and psi.organisationunitid = ou.organisationunitid
 
-where ( '${ouid}' = 'ALL' ou.path like '%/${ouid}/%' )
+where ( '${ouid}' = 'ALL' ou.path like '%/${ouid}%' )
 
 group by ou.uid, prgorg.programid
 
