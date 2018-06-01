@@ -61,7 +61,7 @@ select psi.uid
  , psi.programstageid
  
  , prevSts.value as "prevSts"
- , newSts.value as "newSts"
+ , coalesce(newSts.value, '') as "newSts"
  , elapsDate.value as "elapsDate"
  , noteData.value as "noteData"
  

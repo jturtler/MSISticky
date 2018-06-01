@@ -77,6 +77,7 @@ M_UID.STATUS_CODE_OnBoarding = "ONB";
 M_UID.STATUS_CODE_UnderContract = "UNC";
 M_UID.STATUS_CODE_Suspended = "SUS";
 M_UID.STATUS_CODE_Defranchised = "DEF";
+M_UID.STATUS_CODE_Unknown = ""; // we removed the option for unknown so users couldn't select it, best we can do is use blank as a proxy for unknown
 
 // ==== DataElements ====
 M_UID.AGG_DE_FRANCHISEE_ON_BOARDING = "K7wCU6apTwc";
@@ -104,7 +105,7 @@ M_UID.OUG_UID_FRANCHISEE_ON_BOARDING = "bieIPjDl9rK";
 M_UID.OUG_UID_FRANCHISEE_UNDER_CONTACT = "InJBtUUZy2c";
 M_UID.OUG_UID_FRANCHISEE_SUSPENDED = "f2sBZWvPAAM";
 M_UID.OUG_UID_FRANCHISEE_DEFRANCHISED = "jyhbiSfzbU5";
-M_UID.OUG_UID_FRANCHISEE_UNKNOWN = "";
+M_UID.OUG_UID_FRANCHISEE_UNKNOWN = "c2tTbOMCMet";
 M_UID.OUG_UID_NETWORK_INCLUDED = "qZzR4nEdbWW";
 M_UID.OUG_UID_NETWORK_EXCLUDED = "olNLe6DMrgA";
 
@@ -1090,6 +1091,8 @@ OUGroupUtil.setOUGroups_StatusLog = function( ouid, status, apiUrl )
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_FRANCHISEE_UNDER_CONTACT, ( status === M_UID.STATUS_CODE_UnderContract ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_FRANCHISEE_SUSPENDED, ( status === M_UID.STATUS_CODE_Suspended ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_FRANCHISEE_DEFRANCHISED, ( status === M_UID.STATUS_CODE_Defranchised ), apiUrl );
+    OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_FRANCHISEE_UNKNOWN, ( status === M_UID.STATUS_CODE_Unknown ), apiUrl );
+
 
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_NETWORK_INCLUDED, ( status === M_UID.STATUS_CODE_UnderContract ), apiUrl );	
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_NETWORK_EXCLUDED, ( status !== M_UID.STATUS_CODE_UnderContract ), apiUrl );
@@ -2050,6 +2053,9 @@ function MSIStatusLog( segObj )
 			else if( statusCode == M_UID.STATUS_CODE_Defranchised ){ // "Defranchised"
 				// If successful status change to 'Defranchised', then also perform, segmentation status change
 				me.saveLogStatusData( eventDate, ouId, M_UID.AGG_DE_FRANCHISEE_DEFRANCHISED, M_UID.AGG_DE_NETWORK_EXCLUDED, M_UID.OUG_UID_FRANCHISEE_DEFRANCHISED, M_UID.OUG_UID_NETWORK_EXCLUDED );
+			} else {
+				// we must be unknown, or at least can't have enough info to be known! - Set us to unknown / excluded
+				me.saveLogStatusData( eventDate, ouId, M_UID.AGG_DE_FRANCHISEE_UNKNOWN, M_UID.AGG_DE_NETWORK_EXCLUDED, M_UID.OUG_UID_FRANCHISEE_UNKNOWN, M_UID.OUG_UID_NETWORK_EXCLUDED );
 			}
 			
 			var eventDate1 = eventDate.substring( 0, 19 ) ;
@@ -2210,7 +2216,7 @@ function MSIStatusLog( segObj )
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_FRANCHISEE_UNDER_CONTACT, ougStatusId, me._queryURL_api );
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_FRANCHISEE_SUSPENDED, ougStatusId, me._queryURL_api );
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_FRANCHISEE_DEFRANCHISED, ougStatusId, me._queryURL_api );
-		//OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_FRANCHISEE_UNKNOWN, ougStatusId );
+		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_FRANCHISEE_UNKNOWN, ougStatusId, me._queryURL_api );
 
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_NETWORK_INCLUDED, ougNetworkId, me._queryURL_api );			
 		OUGroupUtil.matchAndJoin_OuGroup( ouId, M_UID.OUG_UID_NETWORK_EXCLUDED, ougNetworkId, me._queryURL_api );

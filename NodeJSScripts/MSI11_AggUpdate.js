@@ -339,7 +339,7 @@ app.submitDataToAggr = function( dataJson )
 
 	// 1. Add Aggr Data G_VAR.numMonthsCopy periods
 	var deListObj = {};
-	deListObj[ M_UID.AGG_DE_FRANCHISEE_UNKNOWN ] = "0";
+	deListObj[ M_UID.AGG_DE_FRANCHISEE_UNKNOWN ] =  Util.get10_Bool(sts === M_UID.STATUS_CODE_Unknown);
 	deListObj[ M_UID.AGG_DE_FRANCHISEE_ON_BOARDING ] = Util.get10_Bool(sts === M_UID.STATUS_CODE_OnBoarding);
 	deListObj[ M_UID.AGG_DE_FRANCHISEE_UNDER_CONTACT ] = Util.get10_Bool(sts === M_UID.STATUS_CODE_UnderContract);
 	deListObj[ M_UID.AGG_DE_FRANCHISEE_SUSPENDED ] = Util.get10_Bool(sts === M_UID.STATUS_CODE_Suspended);
