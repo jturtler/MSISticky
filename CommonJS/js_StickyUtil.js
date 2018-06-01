@@ -723,8 +723,11 @@ Util.checkIfEventDateInCurPeriod = function( eventDate, period )
 // --- Empty data in orgUnitList (Object) ------------------
 Util.setEventList_EmptyOuArray = function( eventList_byOU, ouid, queryUrl_OrgUnitInOUG )
 {
-	// If this is one specific orgUnit request case, if data(event) emtpy case, manually add it 
-	//	- for it to process further, for updating ouGroup, deleting data.
+	// XXX DJP - leaving 'ALL' case in for now, needs review
+	// Now the views have been updated so that an ou always returns at least one row
+	// (if assigned to the program) no matter if it has events or not, not sure
+	// if any of the below is actually needed.
+
 	if ( ouid === "ALL" )
 	{
 		if ( queryUrl_OrgUnitInOUG !== undefined )
@@ -748,13 +751,7 @@ Util.setEventList_EmptyOuArray = function( eventList_byOU, ouid, queryUrl_OrgUni
 			});
 		}
 	}
-	else
-	{ 
-		if ( eventList_byOU[ ouid ] === undefined )
-		{
-			eventList_byOU[ ouid ] = [];
-		}
-	}
+
 };
 
 Util.retreiveOrgUnitInOUG = function( queryUrl, returnFunc )
