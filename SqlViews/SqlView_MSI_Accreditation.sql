@@ -32,10 +32,11 @@ from programstageinstance as psi
       and expdate.dataelementid = (select dataelementid from dataelement where uid = 'aKFgqbuX0gi' limit 1 ) --  244953
 
 
-where ( '${startDate}' = 'ALL' OR psi.executiondate >= to_timestamp( '${startDate}', 'YYYY-MM-DD' ) ) 
- and ( '${endDate}' = 'ALL' OR psi.executiondate <= to_timestamp( '${endDate}', 'YYYY-MM-DD' ) ) 
- and ( '${mode}' <> '3Days' OR ( current_timestamp - interval '3 days' ) <= psi.lastupdated )
- and ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )
+WHERE ( '${startDate}' = 'ALL' OR psi.executiondate >= to_timestamp( '${startDate}', 'YYYY-MM-DD' ) ) 
+  AND ( '${endDate}' = 'ALL' OR psi.executiondate <= to_timestamp( '${endDate}', 'YYYY-MM-DD' ) ) 
+  AND ( '${mode}' <> '3Days' OR ( current_timestamp - interval '3 days' ) <= psi.lastupdated )
+  AND ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' )
+  AND ou.hierarchylevel = 6 
 --  and ( ou.uid = 'tyogguMf4CI' )
 
 order by ou.uid, psi.executiondate;

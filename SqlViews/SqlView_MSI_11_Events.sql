@@ -41,6 +41,7 @@ from organisationunit ou
     on psi.programstageinstanceid = noteData.programstageinstanceid
       and noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
 
-where ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
+WHERE ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
+  AND ou.hierarchylevel = 6 
 
 order by ou.uid, psi.executiondate;
