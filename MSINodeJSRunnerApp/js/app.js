@@ -412,7 +412,7 @@ function UpdateStickyDataValue()
 	
 	me.getProgramParams = function( optionTag )
 	{
-		var params = "&sourceType=WebApp&bgProcess=Y";
+		var params = "&sourceType=WebApp&bgProcess=N";
 		
 		var programType = optionTag.attr("programType");			
 
