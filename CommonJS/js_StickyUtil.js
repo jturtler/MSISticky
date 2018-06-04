@@ -1124,13 +1124,15 @@ OUGroupUtil.setOUGroups_SegLog_WithSub = function( ouid, status, subStatus, apiU
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D2, ( subStatus === M_UID.SEGMENTATION_CODE_D2 ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D3, ( subStatus === M_UID.SEGMENTATION_CODE_D3 ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D4, ( subStatus === M_UID.SEGMENTATION_CODE_D4 ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SUBSEGMENTATION_UNKNOWN, ( status === M_UID.SEGMENTATION_CODE_UNKNOWN ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SUBSEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
 
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_A, ( status === M_UID.SEGMENTATION_CODE_A ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_B, ( status === M_UID.SEGMENTATION_CODE_B ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_C, ( status === M_UID.SEGMENTATION_CODE_C ), apiUrl );
 	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_D, ( status === M_UID.SEGMENTATION_CODE_D ), apiUrl );
-	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SUBSEGMENTATION_UNKNOWN, ( status === M_UID.SEGMENTATION_CODE_UNKNOWN ), apiUrl );
-	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SUBSEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_UNKNOWN, ( status === M_UID.SEGMENTATION_CODE_UNKNOWN ), apiUrl );
+	OUGroupUtil.setOrgUnitToGroup( ouid, M_UID.OUG_UID_SEGMENTATION_DISENFRANCHISE, ( status === M_UID.SEGMENTATION_CODE_DISENFRANCHISE ), apiUrl );
 }
 
 /*
