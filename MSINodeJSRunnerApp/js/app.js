@@ -359,7 +359,7 @@ function UpdateStickyDataValue()
 	
 	me.runNodeJs = function( programName, programId, nodeJSFile, programCase, params )
 	{
-		var serverName = "https://sandbox.orion.mariestopes.org";
+		var serverName = "https://orion.mariestopes.org";
 		// var serverName = "http://localhost:8080/dhis";
 		var url = me.servletLocationTag.val() + "/NodeJSRunner?node=" + nodeJSFile + "&server=" + serverName + "&logLevel=1" + params;
 		
@@ -370,6 +370,7 @@ function UpdateStickyDataValue()
 				type: "GET"
 				,url: url
 				,crossOrigin: true
+				,timeout: 60000
 				,beforeSend: function()
 				{
 					var programDetailsTag = $("<div class='resultMsg' programId='" + programId + "_" + nodeJSFile + "'></span>");
@@ -398,14 +399,28 @@ function UpdateStickyDataValue()
 					var detailsMsgTag = $("<div class='detailsMsg' style='display:none;'>" + response + "</div>");
 					programMsgTag.append( detailsMsgTag );
 				}
-				,error: function( a,b,c )
-				{
+				,error: function (jqXHR, exception) {
+        			var msg = '';
+				    if (jqXHR.status == 404) {
+        			    msg = 'ERROR: requested page not found. [404]';
+        			} else if (jqXHR.status == 500) {
+        			    msg = 'ERROR: Internal Server Error [500].';
+        			} else if (exception === 'parsererror') {
+        			    msg = 'ERROR: Requested JSON parse failed.';
+        			} else if (exception === 'timeout') {
+        			    msg = "TIMEOUT!!! That's a lot of sticky data. Script should still be running in background <br> You'll need to check the sticky data logs.";
+        			} else if (exception === 'abort') {
+        			    msg = 'ERROR: Ajax request aborted.';
+        			} else {
+        			    msg = "ERROR: Unexpected :\n " + jqXHR.responseText;
+        			}
+
 					var programMsgTag = me.dataValueResultDivTag.find("div[programId='" + programId + "_" + nodeJSFile + "']");
 					
 					// Remove loading image
 					programMsgTag.find("img").remove();
 					
-					programMsgTag.append( " ... SUCCESS !!!" );
+					programMsgTag.append( " ... " + msg );
 				}
 			});
 	};
