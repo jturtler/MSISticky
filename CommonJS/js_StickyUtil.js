@@ -350,6 +350,8 @@ Util.getDate_FromYYYYMM = function( strDate )
 		var year = strDate.substring(0, 4);
 		var month = strDate.substring(4, 6);
 
+		// Beware the -1, this is because (believe it or not)
+		// month is zero referenced in javascript
 		date = new Date( year, month - 1 );
 	}
 
@@ -1370,11 +1372,26 @@ AggrDataUtil.submitDataValueSet = function( ouid, jsonData, queryUrl, msgText, r
 	submitFunc( "post", queryUrl, { "dataValues" : jsonData }, returnSuccess, returnFailure );
 }
 
+
+// DJP : We really need to rename these '24pe' functions.
+// It's no longer next 24 periods, it's for a number of specified periods
+// (numMonthsCopy) into the future from today's date.
 AggrDataUtil.getPeList_Next24Pe = function( period )
 {
+
+	// Fills in data for all periods from event to the current period, and then
+	// an extra number of months per numMonthsCopy global var, to cope with
+	// people not updating their sticky data very often
+
 	var peList = [];
 
-	for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
+	var cDate = new Date();
+	var peDate = Util.getDate_FromYYYYMM(period)
+
+	var periodsToDate = (cDate.getFullYear() - peDate.getFullYear()) * 12
+						 + (cDate.getMonth() - peDate.getMonth());
+
+	for ( i = 0; i < (G_VAR.numMonthsCopy + periodsToDate); i++ )
 	{
 		peList.push( Util.generateNextPeriodCode( period, i ) );
 	}
