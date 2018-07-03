@@ -361,7 +361,16 @@ app.submitDataToAggr = function( dataJson )
 	// 3. Insert Data
 	periodListDataObj = {};
 
-	for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
+	// DJP: needs a lot of refactoring -- doing a very similar thing here to
+	// AggrDataUtil.getPeList_Next24Pe and could do with generalising the
+	// addData24Pe and addData_withPeDataList util methods
+	var cDate = new Date();
+	var peDate = Util.getDate_FromYYYYMM(period)
+
+	var periodsToDate = (cDate.getFullYear() - peDate.getFullYear()) * 12
+						 + (cDate.getMonth() - peDate.getMonth());
+
+	for ( i = 0; i < G_VAR.numMonthsCopy + periodsToDate; i++ )
 	{
 		var pe = Util.generateNextPeriodCode( period, i );
 
