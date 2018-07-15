@@ -2872,19 +2872,19 @@ function MISSegLog()
 
 		EventDataUtil.retrieveEventsDesc( ouId, M_UID.PROGRAM_ID_SEG, M_UID.STAGE_ID_SEG, me._queryURL_api, function( eventList )
 		{				
-			if ( eventList && eventList.length > 0 )
-			{
+			var lastEvent;
+
+			if ( eventList && eventList.length > 0 ) {
 				var lastEvent = eventList[0];
-
-				// Add event here..
-				me.createEvent_Seg( eventDate, subStatusCode_DISENF, ouId, lastEvent, function()
-				{						
-					// Perform the Aggregate side data populate
-					me.saveDataValuesAndUpdateOuGroups_Inner( eventDate, subStatusCode_DISENF, ouId );
-
-					if ( returnFunc ) returnFunc();
-				});
 			}
+			// Add event here..
+			me.createEvent_Seg( eventDate, subStatusCode_DISENF, ouId, lastEvent, function()
+			{						
+				// Perform the Aggregate side data populate
+				me.saveDataValuesAndUpdateOuGroups_Inner( eventDate, subStatusCode_DISENF, ouId );
+
+				if ( returnFunc ) returnFunc();
+			});
 		});
 	}
 
