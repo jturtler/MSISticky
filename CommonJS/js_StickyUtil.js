@@ -408,6 +408,27 @@ Util.monthsDiff = function( futureDate, pastDate )
 	return ( ( ( year2 - year1 ) * 12 ) + ( month2 - month1 ) );
 };
 
+Util.monthsDiffToNow = function(pastPeriod)
+{  // Calculates number of months from a date to present date
+   // Period can be in format YYYYMMDD, YYYYMM or an actual date YYYY-MM-DD
+
+	var cDate = new Date();
+	var period = Util.trimDate(pastPeriod);
+	var peDate = Util.getDate_FromYYYYMM(period);
+
+	var periodsToDate = (cDate.getFullYear() - peDate.getFullYear()) * 12
+						 + (cDate.getMonth() - peDate.getMonth());
+
+	return periodsToDate;
+
+}
+
+Util.trimDate = function(strDate)
+{  // Strips dashes out of event dates to make compatible with existing period functions
+   return strDate.replace(/-/g, '');
+}
+
+
 Util.convertStrToDate = function( dateStr )
 {
 	var year = dateStr.substring( 0, 4 );
@@ -1384,14 +1405,9 @@ AggrDataUtil.getPeList_Next24Pe = function( period )
 	// people not updating their sticky data very often
 
 	var peList = [];
+	var numPeriods = Util.monthsDiffToNow(period) + G_VAR.numMonthsCopy;
 
-	var cDate = new Date();
-	var peDate = Util.getDate_FromYYYYMM(period)
-
-	var periodsToDate = (cDate.getFullYear() - peDate.getFullYear()) * 12
-						 + (cDate.getMonth() - peDate.getMonth());
-
-	for ( i = 0; i < (G_VAR.numMonthsCopy + periodsToDate); i++ )
+	for ( i = 0; i < numPeriods; i++ )
 	{
 		peList.push( Util.generateNextPeriodCode( period, i ) );
 	}
@@ -1466,7 +1482,9 @@ AggrDataUtil.saveStatusDataValue = function( eventDate, deId, ouId, value, url, 
 {
 	var json_structuredList = [];
 	var curPeriod = Util.generateEventPeriod( eventDate );
-	for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
+	var numPeriods = Util.monthsDiffToNow(eventDate) + G_VAR.numMonthsCopy;
+
+	for ( i = 0; i < numPeriods; i++ )
 	{
 		var peId = Util.getAddedMonthStr( curPeriod, i );
 		var dataValue = Util.composeDataValueJson( deId, peId, ouId, value );
@@ -2122,7 +2140,9 @@ function MSIStatusLog( segObj )
 
 
 			// 2B. Save the data to future periods -  add to the jsonList
-			for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
+			var numPeriods = Util.monthsDiffToNow(eventDate) + G_VAR.numMonthsCopy;
+
+			for ( i = 0; i < numPeriods; i++ )
 			{
 				var peId = Util.getAddedMonthStr( curPeriod, i );
 				json_structuredList.push( Util.composeDataValueJson( deUid_monthsSince, peId, ouId, i + '' ) );
@@ -3039,7 +3059,9 @@ function MISSegLog()
 		var json_structuredList = [];
 		var curPeriod = Util.generateEventPeriod( eventDate );
 
-		for ( i = 0; i < G_VAR.numMonthsCopy; i++ )
+		var numPeriods = Util.monthsDiffToNow(eventDate) + G_VAR.numMonthsCopy;
+
+		for ( i = 0; i < numPeriods; i++ )
 		{
 			// Generate period
 			var peId = Util.getAddedMonthStr( curPeriod, i );
