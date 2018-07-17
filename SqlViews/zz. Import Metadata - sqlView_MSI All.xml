@@ -5,10 +5,29 @@ If you have to export again, you'll need to replace any <'s etc in the SQL with 
 -->
 
 <metadata>
-<sqlViews>
-<sqlView name="MSI_StausLogAndSegmentation" id="ZEMbfPLazaI">
-<sqlQuery>
-select DISTINCT( org.uid )
+	<sqlViews>
+		<sqlView name="MSI_StausLogAndSegmentation" id="ZEMbfPLazaI">
+			<sqlQuery>select DISTINCT( org.uid )
+ from organisationunit org
+ inner join program_organisationunits prgorg on org.organisationunitid=prgorg.organisationunitid
+ inner join program prg on prg.programid=prgorg.programid
+ 
+ where prg.uid='${programid}'
+ 
+ and org.organisationunitid not in 
+ ( select organisationunitid 
+ from programstageinstance psi 
+ inner join programstage prgstage on psi.programstageid=prgstage.programstageid 
+ where prgstage.uid='${stageid}' )</sqlQuery>
+			<displayName>MSI_StausLogAndSegmentation</displayName>
+			<publicAccess>rw------</publicAccess>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StausLogAndSegmentation_WithParams" id="AUCwBlRxf2k">
+			<sqlQuery>select DISTINCT( org.uid )
  from organisationunit org
  inner join program_organisationunits prgorg on org.organisationunitid=prgorg.organisationunitid
  inner join program prg on prg.programid=prgorg.programid
@@ -20,41 +39,17 @@ select DISTINCT( org.uid )
  from programstageinstance psi 
  inner join programstage prgstage on psi.programstageid=prgstage.programstageid 
  where prgstage.uid='${stageid}' )
-</sqlQuery>
-<displayName>MSI_StausLogAndSegmentation</displayName>
-<publicAccess>rw------</publicAccess>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StausLogAndSegmentation_WithParams" id="AUCwBlRxf2k">
-<sqlQuery>
-select DISTINCT( org.uid )
- from organisationunit org
- inner join program_organisationunits prgorg on org.organisationunitid=prgorg.organisationunitid
- inner join program prg on prg.programid=prgorg.programid
  
- where prg.uid='${programid}'
- 
- and org.organisationunitid not in 
- ( select organisationunitid 
- from programstageinstance psi 
- inner join programstage prgstage on psi.programstageid=prgstage.programstageid 
- where prgstage.uid='${stageid}' )
- 
- and org.uid = '${ouId}'
-</sqlQuery>
-<displayName>MSI_StausLogAndSegmentation_WithParams</displayName>
-<publicAccess>rw------</publicAccess>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_11_Events" id="IElcYd2UtZJ">
-<sqlQuery>
-select psi.uid
+ and org.uid = '${ouId}'</sqlQuery>
+			<displayName>MSI_StausLogAndSegmentation_WithParams</displayName>
+			<publicAccess>rw------</publicAccess>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_11_Events" id="IElcYd2UtZJ">
+			<sqlQuery>select psi.uid
  , ou.uid
  , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701')
  , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') -- eventdate
@@ -99,18 +94,16 @@ select psi.uid
  
  where ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' ) AND ou.hierarchylevel = 6 
  
- order by ou.uid, psi.executiondate;
-</sqlQuery>
-<displayName>MSI_StickyScript_11_Events</displayName>
-<publicAccess>rw------</publicAccess>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_12_Events" id="VBbWciUfbDf">
-<sqlQuery>
-select psi.uid
+ order by ou.uid, psi.executiondate;</sqlQuery>
+			<displayName>MSI_StickyScript_11_Events</displayName>
+			<publicAccess>rw------</publicAccess>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_12_Events" id="VBbWciUfbDf">
+			<sqlQuery>select psi.uid
  , ou.uid
  , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701')
  , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') --- eventdate
@@ -166,18 +159,16 @@ select psi.uid
  
  where ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' ) AND ou.hierarchylevel = 6 
  
- order by ou.uid, psi.executiondate;
-</sqlQuery>
-<displayName>MSI_StickyScript_12_Events</displayName>
-<publicAccess>rw------</publicAccess>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_Accreditations" id="i3PZx8PUQtd">
-<sqlQuery>
-select psi.uid
+ order by ou.uid, psi.executiondate;</sqlQuery>
+			<displayName>MSI_StickyScript_12_Events</displayName>
+			<publicAccess>rw------</publicAccess>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_Accreditations" id="i3PZx8PUQtd">
+			<sqlQuery>select psi.uid
  , ou.uid
  , to_char( psi.executiondate,'YYYYMM')
  , psi.executiondate --- ?? eventdate?
@@ -217,21 +208,17 @@ select psi.uid
  and ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}/%' ) AND ou.hierarchylevel = 6 
  -- and ( ou.uid = 'tyogguMf4CI' )
  
- order by ou.uid, psi.executiondate;
-</sqlQuery>
-<displayName>MSI_StickyScript_Accreditations</displayName>
-<publicAccess>rw------</publicAccess>
-<description>
-MSI Sticky Script sqlView Data - for Accreditation / Authorized - for getting events
-</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_DataSearch" id="PgVKlgcVLUt">
-<sqlQuery>
-select p.startdate, p.enddate
+ order by ou.uid, psi.executiondate;</sqlQuery>
+			<displayName>MSI_StickyScript_Accreditations</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>MSI Sticky Script sqlView Data - for Accreditation / Authorized - for getting events</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_DataSearch" id="PgVKlgcVLUt">
+			<sqlQuery>select p.startdate, p.enddate
  from datavalue as dv
  inner join organisationunit as ou
  on dv.sourceid = ou.organisationunitid
@@ -244,19 +231,17 @@ select p.startdate, p.enddate
  and deleted = false
  and ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) 
  and ( '${endDate}' = 'ALL' OR p.startdate &lt;= to_date( '${endDate}', 'YYYY-MM-DD' ) ) 
- order by p.startdate;
-</sqlQuery>
-<displayName>MSI_StickyScript_DataSearch</displayName>
-<publicAccess>rw------</publicAccess>
-<description>Search data value for period</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_DataSearch_Form11" id="GnPIvGzQU7G">
-<sqlQuery>
-select distinct p.startdate, p.enddate
+ order by p.startdate;</sqlQuery>
+			<displayName>MSI_StickyScript_DataSearch</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>Search data value for period</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_DataSearch_Form11" id="GnPIvGzQU7G">
+			<sqlQuery>select distinct p.startdate, p.enddate
  from datavalue as dv
  inner join organisationunit as ou
  on dv.sourceid = ou.organisationunitid
@@ -269,21 +254,17 @@ select distinct p.startdate, p.enddate
  and deleted = false
  and ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) 
  and ( '${endDate}' = 'ALL' OR p.startdate &lt;= to_date( '${endDate}', 'YYYY-MM-DD' ) ) 
- order by p.startdate;
-</sqlQuery>
-<displayName>MSI_StickyScript_DataSearch_Form11</displayName>
-<publicAccess>rw------</publicAccess>
-<description>
-Search data value for period, with multiple data element for form 1.1
-</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_DataSearch_Form12" id="WFnFbxx9aMC">
-<sqlQuery>
-select distinct p.startdate, p.enddate
+ order by p.startdate;</sqlQuery>
+			<displayName>MSI_StickyScript_DataSearch_Form11</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>Search data value for period, with multiple data element for form 1.1</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_DataSearch_Form12" id="WFnFbxx9aMC">
+			<sqlQuery>select distinct p.startdate, p.enddate
  from datavalue as dv
  inner join organisationunit as ou
  on dv.sourceid = ou.organisationunitid
@@ -296,21 +277,17 @@ select distinct p.startdate, p.enddate
  and deleted = false
  and ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) 
  and ( '${endDate}' = 'ALL' OR p.startdate &lt;= to_date( '${endDate}', 'YYYY-MM-DD' ) ) 
- order by p.startdate;
-</sqlQuery>
-<displayName>MSI_StickyScript_DataSearch_Form12</displayName>
-<publicAccess>rw------</publicAccess>
-<description>
-Search data value for period, with multiple data element for form 1.2
-</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_DataSearch_Form20" id="BpSi9iZ1mdb">
-<sqlQuery>
-select distinct p.startdate, p.enddate
+ order by p.startdate;</sqlQuery>
+			<displayName>MSI_StickyScript_DataSearch_Form12</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>Search data value for period, with multiple data element for form 1.2</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_DataSearch_Form20" id="BpSi9iZ1mdb">
+			<sqlQuery>select distinct p.startdate, p.enddate
  from datavalue as dv
  inner join organisationunit as ou
  on dv.sourceid = ou.organisationunitid
@@ -329,57 +306,49 @@ select distinct p.startdate, p.enddate
  and deleted = false
  and ( '${startDate}' = 'ALL' OR p.enddate >= to_date( '${startDate}', 'YYYY-MM-DD' ) ) 
  and ( '${endDate}' = 'ALL' OR p.startdate &lt;= to_date( '${endDate}', 'YYYY-MM-DD' ) ) 
- order by p.startdate;
-</sqlQuery>
-<displayName>MSI_StickyScript_DataSearch_Form20</displayName>
-<publicAccess>rw------</publicAccess>
-<description>
-Search data value for period, with multiple data element for form 20
-</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_OrgUnitInOUG_Form1" id="Fu3Wc9pt112">
-<sqlQuery>
-select ou.uid as ouid, oug.uid as ougid
+ order by p.startdate;</sqlQuery>
+			<displayName>MSI_StickyScript_DataSearch_Form20</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>Search data value for period, with multiple data element for form 20</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_OrgUnitInOUG_Form1" id="Fu3Wc9pt112">
+			<sqlQuery>select ou.uid as ouid, oug.uid as ougid
  from orgunitgroup as oug
  inner join orgunitgroupmembers as ougm
  on oug.orgunitgroupid = ougm.orgunitgroupid
  inner join organisationunit as ou
  on ougm.organisationunitid = ou.organisationunitid
- where oug.uid in ( 'bieIPjDl9rK', 'InJBtUUZy2c', 'f2sBZWvPAAM', 'jyhbiSfzbU5' );
-</sqlQuery>
-<displayName>MSI_StickyScript_OrgUnitInOUG_Form1</displayName>
-<publicAccess>rw------</publicAccess>
-<description>List orgUnits in orgUnitGroup related to form 1</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_OrgUnitInOUG_Form2" id="Sou7m9Ptwec">
-<sqlQuery>
-select ou.uid as ouid, oug.uid as ougid
+ where oug.uid in ( 'bieIPjDl9rK', 'InJBtUUZy2c', 'f2sBZWvPAAM', 'jyhbiSfzbU5' );</sqlQuery>
+			<displayName>MSI_StickyScript_OrgUnitInOUG_Form1</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>List orgUnits in orgUnitGroup related to form 1</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_OrgUnitInOUG_Form2" id="Sou7m9Ptwec">
+			<sqlQuery>select ou.uid as ouid, oug.uid as ougid
  from orgunitgroup as oug
  inner join orgunitgroupmembers as ougm
  on oug.orgunitgroupid = ougm.orgunitgroupid
  inner join organisationunit as ou
  on ougm.organisationunitid = ou.organisationunitid
- where oug.uid in ( 'VgUniUYGInI', 'h90V7SLY1bm', 'dgJIod9A9Zz', 'ZFY5dg0Cr3N', 'Jw7MSDwSY8O' );
-</sqlQuery>
-<displayName>MSI_StickyScript_OrgUnitInOUG_Form2</displayName>
-<publicAccess>rw------</publicAccess>
-<description>List orgUnits in orgUnitGroup related to form 2</description>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-<sqlView name="MSI_StickyScript_Unknown" id="zDtkWCN7AuF">
-<sqlQuery>
-select ou.uid, 'aggr' as "type", dv.value as "value", prgorg.programid as "prgrel"
+ where oug.uid in ( 'VgUniUYGInI', 'h90V7SLY1bm', 'dgJIod9A9Zz', 'ZFY5dg0Cr3N', 'Jw7MSDwSY8O' );</sqlQuery>
+			<displayName>MSI_StickyScript_OrgUnitInOUG_Form2</displayName>
+			<publicAccess>rw------</publicAccess>
+			<description>List orgUnits in orgUnitGroup related to form 2</description>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+		<sqlView name="MSI_StickyScript_Unknown" id="zDtkWCN7AuF">
+			<sqlQuery>select ou.uid, 'aggr' as "type", dv.value as "value", prgorg.programid as "prgrel"
  from datavalue as dv
  inner join period as p
  on p.periodid = dv.periodid 
@@ -423,14 +392,13 @@ select ou.uid, 'aggr' as "type", dv.value as "value", prgorg.programid as "prgre
  
  group by ou.uid, prgorg.programid
  
- order by type, value;
-</sqlQuery>
-<displayName>MSI_StickyScript_Unknown</displayName>
-<publicAccess>rw------</publicAccess>
-<type>QUERY</type>
-<externalAccess>false</externalAccess>
-<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
-<user id="Onhhhc9zamM"/>
-</sqlView>
-</sqlViews>
+ order by type, value;</sqlQuery>
+			<displayName>MSI_StickyScript_Unknown</displayName>
+			<publicAccess>rw------</publicAccess>
+			<type>QUERY</type>
+			<externalAccess>false</externalAccess>
+			<cacheStrategy>RESPECT_SYSTEM_SETTING</cacheStrategy>
+			<user id="Onhhhc9zamM"/>
+		</sqlView>
+	</sqlViews>
 </metadata>
