@@ -53,15 +53,15 @@ UNION
     SELECT
        psi.uid AS programuid
      , ou.uid AS ouuid
-     , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
-     , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
+     , coalesce(to_char( firstdataperiod.earliestdate,'YYYYMM'),'201701') AS period
+     , coalesce(firstdataperiod.earliestdate,'2017-01-01 00:00:00.0') AS eventdate
      , psi.programstageid AS programstageid
      , '' AS "prevSts"
      , 'UNC' AS "newSts"
      , '' AS "elapsDate"
      , '' AS "noteData"
     
-    from organisationunit ou
+    FROM organisationunit ou
     
       INNER JOIN program_organisationunits AS prgorg
         ON prgorg.organisationunitid = ou.organisationunitid
