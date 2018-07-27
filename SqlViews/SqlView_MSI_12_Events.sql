@@ -101,6 +101,11 @@ UNION
                       ON p.periodid = dv.periodid
                     INNER JOIN organisationunit ou
                       ON ou.organisationunitid = dv.sourceid
+                    INNER JOIN datasetelement dse
+                      ON dse.dataelementid = dv.dataelementid
+                    INNER JOIN dataset ds  -- only look for non sticky data
+                      ON ds.datasetid = dse.datasetid
+                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
           GROUP BY  ou.parentid
       ) firstdataperiod
         ON firstdataperiod.ouid = ou.organisationunitid
