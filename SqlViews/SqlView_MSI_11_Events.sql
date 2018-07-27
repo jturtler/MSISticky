@@ -6,44 +6,44 @@ SELECT * FROM (
      , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
      , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
      , psi.programstageid AS programstageid
-     , prevSts.value as "prevSts"
-     , coalesce(newSts.value, '') as "newSts"
-     , elapsDate.value as "elapsDate"
-     , noteData.value as "noteData"
+     , prevSts.value AS "prevSts"
+     , coalesce(newSts.value, '') AS "newSts"
+     , elapsDate.value AS "elapsDate"
+     , noteData.value AS "noteData"
     
-    from organisationunit ou
+    FROM organisationunit ou
     
-      inner join program_organisationunits as prgorg
-        on prgorg.organisationunitid = ou.organisationunitid
-        and prgorg.programid = (select programid from program where uid = '${prgid}')
+      INNER JOIN program_organisationunits AS prgorg
+        ON prgorg.organisationunitid = ou.organisationunitid
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
     
-      inner join program p 
-        on p.programid = prgorg.programid 
+      INNER JOIN program p 
+        ON p.programid = prgorg.programid 
     
-      inner join programstage as ps
-        on p.programid = ps.programid
+      INNER JOIN programstage AS ps
+        ON p.programid = ps.programid
       
-      inner join programstageinstance as psi
-        on psi.organisationunitid = ou.organisationunitid 
-          and psi.programstageid = ps.programstageid  
+      INNER JOIN programstageinstance AS psi
+        ON psi.organisationunitid = ou.organisationunitid 
+          AND psi.programstageid = ps.programstageid  
     
-      inner join trackedentitydatavalue as newSts
-        on psi.programstageinstanceid = newSts.programstageinstanceid
-          and newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+      INNER JOIN trackedentitydatavalue AS newSts
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
     
-      left outer join trackedentitydatavalue as prevSts
-        on psi.programstageinstanceid = prevSts.programstageinstanceid
-          and prevSts.dataelementid = (select dataelementid from dataelement where uid = 'k95lcIlS4bv' limit 1 ) --786150
+      left outer join trackedentitydatavalue AS prevSts
+        ON psi.programstageinstanceid = prevSts.programstageinstanceid
+          AND prevSts.dataelementid = (select dataelementid from dataelement where uid = 'k95lcIlS4bv' limit 1 ) --786150
           
-      left outer join trackedentitydatavalue as elapsDate
-        on psi.programstageinstanceid = elapsDate.programstageinstanceid
-          and elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
+      left outer join trackedentitydatavalue AS elapsDate
+        ON psi.programstageinstanceid = elapsDate.programstageinstanceid
+          AND elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
     
-      left outer join trackedentitydatavalue as noteData
-        on psi.programstageinstanceid = noteData.programstageinstanceid
-          and noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
+      left outer join trackedentitydatavalue AS noteData
+        ON psi.programstageinstanceid = noteData.programstageinstanceid
+          AND noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
     
-    WHERE ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
       AND ou.hierarchylevel = 6 
 
 UNION
@@ -57,33 +57,33 @@ UNION
      , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
      , psi.programstageid AS programstageid
      , '' AS "prevSts"
-     , 'UNC' as "newSts"
+     , 'UNC' AS "newSts"
      , '' AS "elapsDate"
      , '' AS "noteData"
     
     from organisationunit ou
     
-      inner join program_organisationunits as prgorg
-        on prgorg.organisationunitid = ou.organisationunitid
-        and prgorg.programid = (select programid from program where uid = '${prgid}')
+      INNER JOIN program_organisationunits AS prgorg
+        ON prgorg.organisationunitid = ou.organisationunitid
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
     
-      inner join program p 
-        on p.programid = prgorg.programid 
+      INNER JOIN program p 
+        ON p.programid = prgorg.programid 
     
-      inner join programstage as ps
-        on p.programid = ps.programid
+      INNER JOIN programstage AS ps
+        ON p.programid = ps.programid
       
-      inner join programstageinstance as psi
-        on psi.organisationunitid = ou.organisationunitid 
-          and psi.programstageid = ps.programstageid  
+      INNER JOIN programstageinstance AS psi
+        ON psi.organisationunitid = ou.organisationunitid 
+          AND psi.programstageid = ps.programstageid  
     
-      inner join trackedentitydatavalue as newSts
-        on psi.programstageinstanceid = newSts.programstageinstanceid
-          and newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+      INNER JOIN trackedentitydatavalue AS newSts
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
     
       -- add an event for the first period a data value exists, if data exists 
       -- before any of the events in the system 
-      inner join (   
+      INNER JOIN (   
             SELECT  dv.sourceid, MIN(p.startdate) AS earliestdate
               FROM  datavalue dv
                     INNER JOIN period p 
@@ -93,8 +93,8 @@ UNION
         ON firstdataperiod.sourceid = ou.organisationunitid
         AND firstdataperiod.earliestdate < date_trunc('month', psi.executiondate)
 
-    WHERE ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
       AND ou.hierarchylevel = 6 
 
 ) all_events
-order by ouuid, eventdate;
+ORDER BY ouuid, eventdate;
