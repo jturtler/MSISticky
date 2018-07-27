@@ -53,13 +53,13 @@ UNION
     SELECT
        psi.uid AS programuid
      , ou.uid AS ouuid
-     , coalesce(to_char( firstdataperiod.earliestdate,'YYYYMM'),'201701') AS period
+     , coalesce(to_char(firstdataperiod.earliestdate,'YYYYMM'),'201701') AS period
      , coalesce(firstdataperiod.earliestdate,'2017-01-01 00:00:00.0') AS eventdate
      , psi.programstageid AS programstageid
      , '' AS "prevSts"
      , 'UNC' AS "newSts"
-     , '' AS "elapsDate"
-     , '' AS "noteData"
+     , null AS "elapsDate"
+     , null AS "noteData"
     
     FROM organisationunit ou
     
@@ -84,17 +84,70 @@ UNION
       -- add an event for the first period a data value exists, if data exists 
       -- before any of the events in the system 
       INNER JOIN (   
-            SELECT  dv.sourceid, MIN(p.startdate) AS earliestdate
+            SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
               FROM  datavalue dv
                     INNER JOIN period p 
-                    ON p.periodid = dv.periodid
-          GROUP BY  dv.sourceid
+                      ON p.periodid = dv.periodid
+                    INNER JOIN organisationunit ou
+                      ON ou.organisationunitid = dv.sourceid
+          GROUP BY  ou.parentid
       ) firstdataperiod
-        ON firstdataperiod.sourceid = ou.organisationunitid
+        ON firstdataperiod.ouid = ou.organisationunitid
         AND firstdataperiod.earliestdate < date_trunc('month', psi.executiondate)
 
     WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
       AND ou.hierarchylevel = 6 
+
+UNION
+-- Part 3 : same as part 2 but for unknown ou's (e.g. where we don't find events
+-- for an ou, see null filter in where clause)
+    SELECT
+       psi.uid AS programuid
+     , ou.uid AS ouuid
+     , coalesce(to_char(firstdataperiod.earliestdate, 'YYYYMM'),'201701') AS period
+     , coalesce(firstdataperiod.earliestdate, '2017-01-01 00:00:00.0') AS eventdate
+     , psi.programstageid AS programstageid
+     , '' AS "prevSts"
+     , '' AS "newSts" -- js_StickyUtil.js treats blank as unknown status
+     , null AS "elapsDate"
+     , null AS "noteData"
+    
+    FROM organisationunit ou
+    
+      INNER JOIN program_organisationunits AS prgorg
+        ON prgorg.organisationunitid = ou.organisationunitid
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
+    
+      INNER JOIN program p 
+        ON p.programid = prgorg.programid 
+    
+      INNER JOIN programstage AS ps
+        ON p.programid = ps.programid
+      
+      LEFT JOIN programstageinstance AS psi
+        ON psi.organisationunitid = ou.organisationunitid 
+          AND psi.programstageid = ps.programstageid  
+    
+      LEFT JOIN trackedentitydatavalue AS newSts
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+    
+      -- add an event for the first period a data value exists, if data exists 
+      -- before any of the events in the system 
+      INNER JOIN (   
+            SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
+              FROM  datavalue dv
+                    INNER JOIN period p 
+                      ON p.periodid = dv.periodid
+                    INNER JOIN organisationunit ou
+                      ON ou.organisationunitid = dv.sourceid
+          GROUP BY  ou.parentid
+      ) firstdataperiod
+        ON firstdataperiod.ouid = ou.organisationunitid
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
+      AND ou.hierarchylevel = 6 
+      AND newSts IS null
 
 ) all_events
 ORDER BY ouuid, eventdate;
