@@ -45,5 +45,56 @@ SELECT * FROM (
     
     WHERE ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
       AND ou.hierarchylevel = 6 
+
+UNION
+-- Part 2 : if data exists before the eventdate, assume under contract for that period onwards
+-- This isn't clever enough yet to deal with gaps in data entry, but ensures are performance
+-- indicators are conservative
+    SELECT
+       psi.uid AS programuid
+     , ou.uid AS ouuid
+     , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
+     , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
+     , psi.programstageid AS programstageid
+     , '' AS "prevSts"
+     , 'UNC' as "newSts"
+     , '' AS "elapsDate"
+     , '' AS "noteData"
+    
+    from organisationunit ou
+    
+      inner join program_organisationunits as prgorg
+        on prgorg.organisationunitid = ou.organisationunitid
+        and prgorg.programid = (select programid from program where uid = '${prgid}')
+    
+      inner join program p 
+        on p.programid = prgorg.programid 
+    
+      inner join programstage as ps
+        on p.programid = ps.programid
+      
+      inner join programstageinstance as psi
+        on psi.organisationunitid = ou.organisationunitid 
+          and psi.programstageid = ps.programstageid  
+    
+      inner join trackedentitydatavalue as newSts
+        on psi.programstageinstanceid = newSts.programstageinstanceid
+          and newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+    
+      -- add an event for the first period a data value exists, if data exists 
+      -- before any of the events in the system 
+      inner join (   
+            SELECT  dv.sourceid, MIN(p.startdate) AS earliestdate
+              FROM  datavalue dv
+                    INNER JOIN period p 
+                    ON p.periodid = dv.periodid
+          GROUP BY  dv.sourceid
+      ) firstdataperiod
+        ON firstdataperiod.sourceid = ou.organisationunitid
+        AND firstdataperiod.earliestdate < date_trunc('month', psi.executiondate)
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path like '%/${ouid}%' )
+      AND ou.hierarchylevel = 6 
+
 ) all_events
 order by ouuid, eventdate;
