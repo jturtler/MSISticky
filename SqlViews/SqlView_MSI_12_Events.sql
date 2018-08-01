@@ -1,5 +1,5 @@
--- Part 1 : retrieve all sub segmentation events for org units the seg program is assigned to
 SELECT * FROM (
+-- Part 1 : retrieve all sub segmentation events for org units the seg program is assigned to
     SELECT 
        psi.uid AS programuid
      , ou.uid AS ouuid

@@ -1,5 +1,5 @@
--- Part 1 : retrieve all events for org units the status program is assigned to
 SELECT * FROM (
+-- Part 1 : retrieve all events for org units the status program is assigned to
     SELECT
        psi.uid AS programuid
      , ou.uid AS ouuid
@@ -113,7 +113,12 @@ UNION
      , coalesce(firstdataperiod.earliestdate, '2017-01-01 00:00:00.0') AS eventdate
      , psi.programstageid AS programstageid
      , '' AS "prevSts"
-     , '' AS "newSts" -- js_StickyUtil.js treats blank as unknown status
+     , CASE 
+       WHEN firstdataperiod.earliestdate IS NULL 
+       THEN '' -- js_StickyUtil.js treats blank as unknown status
+       ELSE 'UNC' 
+       END 
+       AS "newSts" 
      , null AS "elapsDate"
      , null AS "noteData"
     
@@ -139,7 +144,7 @@ UNION
     
       -- add an event for the first period a data value exists, if data exists 
       -- before any of the events in the system 
-      INNER JOIN (   
+      LEFT JOIN (   
             SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
               FROM  datavalue dv
                     INNER JOIN period p 
