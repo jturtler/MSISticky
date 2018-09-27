@@ -245,6 +245,23 @@ app.process_AggUpdate = function( eventList_byOU )
 
 	if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<BR>=== Aggr Update: ' );
 
+	if (ouCount == 0) {
+		try {
+			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' Program no longer assigned to ouid: ' + _ouid + '<br> Attempting to delete all data...');
+			
+			// Delete existing data in Aggregate side first!!
+			app.deleteDataValueSet( _ouid, function( success ) {
+				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( 'Success!: ');
+				}
+			);
+		}
+		catch ( ex )
+		{
+			Util.ConsoleLog( '<BR><BR> == ###-ERROR- on Aggr Update when deleting data for orgUnit, ouId: ' + _ouid + ', msg: ' + ex.stack );
+			_foundFailedCase = true;
+		}
+	}
+
 	for ( var ouId in eventList_byOU )
 	{
 		try
