@@ -6,7 +6,7 @@ from datavalue as dv
     on dv.dataelementid = de.dataelementid
   inner join period as p
     on dv.periodid = p.periodid
-where ou.uid = '${ouid}'
+where ou.path LIKE '%/${ouid}%'
 and de.uid in ( select av.value
     from program as p
     inner join programattributevalues as pav

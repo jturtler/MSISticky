@@ -48,7 +48,6 @@ LogProgram.DE_ID_EndTime = "aJB3qLdKYXN";
 LogProgram.DE_ID_OverallResult = "qiRa8iwGtFE";
 LogProgram.DE_ID_FullReport = "e9CLQZqGJPo";
 
-AggrDataUtil._sqlViewId_DataSearch = 'PgVKlgcVLUt';
 AggrDataUtil._sqlViewId_DataSearch_Form11 = 'GnPIvGzQU7G';
 AggrDataUtil._sqlViewId_DataSearch_Form12 = 'WFnFbxx9aMC';
 AggrDataUtil._sqlViewId_DataSearch_Form20 = 'BpSi9iZ1mdb';
