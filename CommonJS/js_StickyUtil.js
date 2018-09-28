@@ -1281,6 +1281,8 @@ AggrDataUtil.retrieveDataSearchPeriods = function( ouid, formType, form20Id, sta
 		+ '&var=endDate:' + endDate 
 		+ tailCondition;
 	
+	if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( '<br>Searching for existing data with query : ' + queryUrl );
+
 	// Retrieve SQLView data
 	var retrieveFunc = ( formAsyncStr && formAsyncStr === 'formAsync' ) ? RESTUtil.retreiveData_Asynch : RESTUtil.retreiveData_Synch;
 
