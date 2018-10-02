@@ -692,7 +692,7 @@ ORDER BY ouuid, eventdate;</sqlQuery>
 			<user id="Onhhhc9zamM"/>
 		</sqlView>
 		<sqlView id="GnPIvGzQU7G" name="MSI_StickyScript_DataSearch_Form11">
-			<sqlQuery>select distinct p.startdate, p.enddate
+			<sqlQuery>select distinct p.startdate, ou.uid
  from datavalue as dv
  inner join organisationunit as ou
  on dv.sourceid = ou.organisationunitid
@@ -717,7 +717,7 @@ ORDER BY ouuid, eventdate;</sqlQuery>
 			<user id="Onhhhc9zamM"/>
 		</sqlView>
 		<sqlView id="WFnFbxx9aMC" name="MSI_StickyScript_DataSearch_Form12">
-			<sqlQuery>select distinct p.startdate, p.enddate
+			<sqlQuery>select distinct p.startdate, ou.uid
  from datavalue as dv
  inner join organisationunit as ou
  on dv.sourceid = ou.organisationunitid

@@ -556,6 +556,14 @@ Util.fillLeadingZero = function( val )
 	return ( val[1] ) ? val : "0" + val[0];
 };
 
+Util.isEmpty = function(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+};
+
 
 // -- JQuery Ones - Form specific
 
@@ -1224,14 +1232,28 @@ OUGroupUtil.matchAndJoin_OuGroup = function( ouId, ougId, ougId2, url )
 AggrDataUtil.deleteDataBySearchDe = function( formAsyncStr, deListObj, ouid, startDate, endDate, formType, form20Id, apiUrl, msgText, returnSuccess, returnFailure )
 {
 	// retrieve period - 'startDate' example '2017-01-01'
-	AggrDataUtil.retrieveDataSearchPeriods( ouid, formType, form20Id, startDate, endDate, apiUrl, function( dataPeriods )
+	AggrDataUtil.retrieveDataSearchPeriods( ouid, formType, form20Id, startDate, endDate, apiUrl, function( dataPeriodsByOrgs )
 	{
-		//AggrDataUtil.retrieveDataSearchPeriods = function( ouid, formType, form20Id, startDate, endDate, apiUrl, returnFunc, formAsyncStr )
+		if (Util.isEmpty(dataPeriodsByOrgs)) {
+			Util.ConsoleLog("<br> No pre-existing data found, continuing... ");
+			if ( returnSuccess ) {
+				returnSuccess();
+			} else if (returnFailure) {
+				returnFailure();
+			} else {
+				Util.ConsoleLog("<br> deleteDataBySearchDe : completed")
+			}
+		} else {
+			Util.ConsoleLog("<br> Found pre-existing data to remove, processing... ");
+			for (var org in dataPeriodsByOrgs) {
 
-		var peList = AggrDataUtil.getPeListFromDateStr( dataPeriods );
+				var dataPeriods = dataPeriodsByOrgs[org];
+				var peList = AggrDataUtil.getPeListFromDateStr( dataPeriods );
 
-		var queryUrl_delete = apiUrl + 'dataValueSets?importStrategy=DELETE';
-		AggrDataUtil.changeData ( deListObj, peList, ouid, queryUrl_delete, msgText, returnSuccess, returnFailure, formAsyncStr );
+				var queryUrl_delete = apiUrl + 'dataValueSets?importStrategy=DELETE';
+				AggrDataUtil.changeData ( deListObj, peList, ouid, queryUrl_delete, msgText, returnSuccess, returnFailure, formAsyncStr );
+			}
+		}
 	}, formAsyncStr );
 };
 
@@ -1288,16 +1310,22 @@ AggrDataUtil.retrieveDataSearchPeriods = function( ouid, formType, form20Id, sta
 
 	retrieveFunc( queryUrl, function( json_SqlViewData )	
 	{
-		var returnList = [];
+		var dataPeriodsByOrgs = {};
 		var sqlRowsData = ( json_SqlViewData !== undefined ) ? json_SqlViewData.rows : [];
 
+		// Build our list of data periods data exists for by org units
 		for( var i = 0; i < sqlRowsData.length; i++ )
 		{
+			// note: incoming data in format [ period, ouId]
 			var data = sqlRowsData[i];
-			returnList.push( data[0] );
+			if (! dataPeriodsByOrgs.hasOwnProperty(data[1])) {
+				dataPeriodsByOrgs[data[1]]=[data[0]];
+			} else {
+				dataPeriodsByOrgs[data[1]].push(data[0]);
+			}
 		}
-		
-		returnFunc( returnList );
+
+		returnFunc( dataPeriodsByOrgs );
 	});	
 };
 

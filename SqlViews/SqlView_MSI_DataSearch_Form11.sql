@@ -1,4 +1,4 @@
-select distinct p.startdate, p.enddate
+select distinct p.startdate, ou.uid
 from datavalue as dv
   inner join organisationunit as ou
     on dv.sourceid = ou.organisationunitid
