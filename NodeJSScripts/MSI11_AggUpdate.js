@@ -252,13 +252,12 @@ app.process_AggUpdate = function( eventList_byOU )
 
 	if (ouCount == 0) {
 		try {
-			if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( ' Program no longer assigned to ouid: ' + _ouid + '<br> Attempting to delete all data...');
+			if ( _logLevel && _logLevel >= 1 ) {
+				Util.ConsoleLog( 'Could not find any children of ou:' + _ouid 
+					+ ' assigned to the status program<br>. Please assign program to some level 6 children...'
+				);
+			}
 			
-			// Delete existing data in Aggregate side first!!
-			app.deleteDataValueSet( _ouid, function( success ) {
-				if ( _logLevel && _logLevel >= 1 ) Util.ConsoleLog( 'Success!: ');
-				}
-			);
 		}
 		catch ( ex )
 		{
