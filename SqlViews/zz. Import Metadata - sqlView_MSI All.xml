@@ -50,174 +50,342 @@ If you have to export again, you'll need to replace any <'s etc in the SQL with 
 			<user id="Onhhhc9zamM"/>
 		</sqlView>
 		<sqlView id="IElcYd2UtZJ" name="MSI_StickyScript_11_Events">
-			<sqlQuery>SELECT * FROM (
--- Part 1 : retrieve all events for org units the status program is assigned to
-    SELECT
-       psi.uid AS programuid
-     , ou.uid AS ouuid
-     , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
-     , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
-     , psi.programstageid AS programstageid
-     , prevSts.value AS &quot;prevSts&quot;
-     , coalesce(newSts.value, '') AS &quot;newSts&quot;
-     , elapsDate.value AS &quot;elapsDate&quot;
-     , noteData.value AS &quot;noteData&quot;
-    
-    FROM organisationunit ou
-    
-      INNER JOIN program_organisationunits AS prgorg
-        ON prgorg.organisationunitid = ou.organisationunitid
-        AND prgorg.programid = (select programid from program where uid = '${prgid}')
-    
-      INNER JOIN program p 
-        ON p.programid = prgorg.programid 
-    
-      INNER JOIN programstage AS ps
-        ON p.programid = ps.programid
-      
-      INNER JOIN programstageinstance AS psi
-        ON psi.organisationunitid = ou.organisationunitid 
-          AND psi.programstageid = ps.programstageid  
-    
-      INNER JOIN trackedentitydatavalue AS newSts
-        ON psi.programstageinstanceid = newSts.programstageinstanceid
-          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
-    
-      left outer join trackedentitydatavalue AS prevSts
-        ON psi.programstageinstanceid = prevSts.programstageinstanceid
-          AND prevSts.dataelementid = (select dataelementid from dataelement where uid = 'k95lcIlS4bv' limit 1 ) --786150
-          
-      left outer join trackedentitydatavalue AS elapsDate
-        ON psi.programstageinstanceid = elapsDate.programstageinstanceid
-          AND elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
-    
-      left outer join trackedentitydatavalue AS noteData
-        ON psi.programstageinstanceid = noteData.programstageinstanceid
-          AND noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
-    
-    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
-      AND ou.hierarchylevel = 6 
-
-UNION
--- Part 2 : if data exists before the eventdate, assume under contract for that period onwards
--- This isn't clever enough yet to deal with gaps in data entry, but ensures are performance
--- indicators are conservative
-    SELECT
-       psi.uid AS programuid
-     , ou.uid AS ouuid
-     , coalesce(to_char(firstdataperiod.earliestdate,'YYYYMM'),'201701') AS period
-     , coalesce(firstdataperiod.earliestdate,'2017-01-01 00:00:00.0') AS eventdate
-     , psi.programstageid AS programstageid
-     , '' AS &quot;prevSts&quot;
-     , 'UNC' AS &quot;newSts&quot;
-     , null AS &quot;elapsDate&quot;
-     , null AS &quot;noteData&quot;
-    
-    FROM organisationunit ou
-    
-      INNER JOIN program_organisationunits AS prgorg
-        ON prgorg.organisationunitid = ou.organisationunitid
-        AND prgorg.programid = (select programid from program where uid = '${prgid}')
-    
-      INNER JOIN program p 
-        ON p.programid = prgorg.programid 
-    
-      INNER JOIN programstage AS ps
-        ON p.programid = ps.programid
-      
-      INNER JOIN programstageinstance AS psi
-        ON psi.organisationunitid = ou.organisationunitid 
-          AND psi.programstageid = ps.programstageid  
-    
-      INNER JOIN trackedentitydatavalue AS newSts
-        ON psi.programstageinstanceid = newSts.programstageinstanceid
-          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
-    
-      -- add an event for the first period a data value exists, if data exists 
-      -- before any of the events in the system 
-      INNER JOIN (   
-            SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
-              FROM  datavalue dv
-                    INNER JOIN period p 
-                      ON p.periodid = dv.periodid
-                    INNER JOIN organisationunit ou
-                      ON ou.organisationunitid = dv.sourceid
-                    INNER JOIN datasetelement dse
-                      ON dse.dataelementid = dv.dataelementid
-                    INNER JOIN dataset ds  -- only look for non sticky data
-                      ON ds.datasetid = dse.datasetid
-                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
-          GROUP BY  ou.parentid
-      ) firstdataperiod
-        ON firstdataperiod.ouid = ou.organisationunitid
-        AND firstdataperiod.earliestdate &lt; date_trunc('month', psi.executiondate)
-
-    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
-      AND ou.hierarchylevel = 6 
-
-UNION
--- Part 3 : same as part 2 but for unknown ou's (e.g. where we don't find events
--- for an ou, see null filter in where clause)
-    SELECT
-       psi.uid AS programuid
-     , ou.uid AS ouuid
-     , coalesce(to_char(firstdataperiod.earliestdate, 'YYYYMM'),'201701') AS period
-     , coalesce(firstdataperiod.earliestdate, '2017-01-01 00:00:00.0') AS eventdate
-     , psi.programstageid AS programstageid
-     , '' AS &quot;prevSts&quot;
-     , CASE 
-       WHEN firstdataperiod.earliestdate IS NULL 
-       THEN '' -- js_StickyUtil.js treats blank as unknown status
-       ELSE 'UNC' 
-       END 
-       AS &quot;newSts&quot; 
-     , null AS &quot;elapsDate&quot;
-     , null AS &quot;noteData&quot;
-    
-    FROM organisationunit ou
-    
-      INNER JOIN program_organisationunits AS prgorg
-        ON prgorg.organisationunitid = ou.organisationunitid
-        AND prgorg.programid = (select programid from program where uid = '${prgid}')
-    
-      INNER JOIN program p 
-        ON p.programid = prgorg.programid 
-    
-      INNER JOIN programstage AS ps
-        ON p.programid = ps.programid
-      
-      LEFT JOIN programstageinstance AS psi
-        ON psi.organisationunitid = ou.organisationunitid 
-          AND psi.programstageid = ps.programstageid  
-    
-      LEFT JOIN trackedentitydatavalue AS newSts
-        ON psi.programstageinstanceid = newSts.programstageinstanceid
-          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
-    
-      -- add an event for the first period a data value exists, if data exists 
-      -- before any of the events in the system 
-      LEFT JOIN (   
-            SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
-              FROM  datavalue dv
-                    INNER JOIN period p 
-                      ON p.periodid = dv.periodid
-                    INNER JOIN organisationunit ou
-                      ON ou.organisationunitid = dv.sourceid
-                    INNER JOIN datasetelement dse
-                      ON dse.dataelementid = dv.dataelementid
-                    INNER JOIN dataset ds  -- only look for non sticky data
-                      ON ds.datasetid = dse.datasetid
-                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
-          GROUP BY  ou.parentid
-      ) firstdataperiod
-        ON firstdataperiod.ouid = ou.organisationunitid
-
-    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
-      AND ou.hierarchylevel = 6 
-      AND newSts IS null
-
-) all_events
-ORDER BY ouuid, eventdate;
+			<sqlQuery>SELECT * FROM (
+
+-- Part 1 : retrieve all events for org units the status program is assigned to
+
+    SELECT
+
+       psi.uid AS programuid
+
+     , ou.uid AS ouuid
+
+     , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
+
+     , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
+
+     , psi.programstageid AS programstageid
+
+     , prevSts.value AS &quot;prevSts&quot;
+
+     , coalesce(newSts.value, '') AS &quot;newSts&quot;
+
+     , elapsDate.value AS &quot;elapsDate&quot;
+
+     , noteData.value AS &quot;noteData&quot;
+
+    
+
+    FROM organisationunit ou
+
+    
+
+      INNER JOIN program_organisationunits AS prgorg
+
+        ON prgorg.organisationunitid = ou.organisationunitid
+
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
+
+    
+
+      INNER JOIN program p 
+
+        ON p.programid = prgorg.programid 
+
+    
+
+      INNER JOIN programstage AS ps
+
+        ON p.programid = ps.programid
+
+      
+
+      INNER JOIN programstageinstance AS psi
+
+        ON psi.organisationunitid = ou.organisationunitid 
+
+          AND psi.programstageid = ps.programstageid  
+
+    
+
+      INNER JOIN trackedentitydatavalue AS newSts
+
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+
+    
+
+      left outer join trackedentitydatavalue AS prevSts
+
+        ON psi.programstageinstanceid = prevSts.programstageinstanceid
+
+          AND prevSts.dataelementid = (select dataelementid from dataelement where uid = 'k95lcIlS4bv' limit 1 ) --786150
+
+          
+
+      left outer join trackedentitydatavalue AS elapsDate
+
+        ON psi.programstageinstanceid = elapsDate.programstageinstanceid
+
+          AND elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
+
+    
+
+      left outer join trackedentitydatavalue AS noteData
+
+        ON psi.programstageinstanceid = noteData.programstageinstanceid
+
+          AND noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
+
+    
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
+
+      AND ou.hierarchylevel = 6 
+
+
+
+UNION
+
+-- Part 2 : if data exists before the eventdate, assume under contract for that period onwards
+
+-- This isn't clever enough yet to deal with gaps in data entry, but ensures are performance
+
+-- indicators are conservative
+
+    SELECT
+
+       psi.uid AS programuid
+
+     , ou.uid AS ouuid
+
+     , coalesce(to_char(firstdataperiod.earliestdate,'YYYYMM'),'201701') AS period
+
+     , coalesce(firstdataperiod.earliestdate,'2017-01-01 00:00:00.0') AS eventdate
+
+     , psi.programstageid AS programstageid
+
+     , '' AS &quot;prevSts&quot;
+
+     , 'UNC' AS &quot;newSts&quot;
+
+     , null AS &quot;elapsDate&quot;
+
+     , null AS &quot;noteData&quot;
+
+    
+
+    FROM organisationunit ou
+
+    
+
+      INNER JOIN program_organisationunits AS prgorg
+
+        ON prgorg.organisationunitid = ou.organisationunitid
+
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
+
+    
+
+      INNER JOIN program p 
+
+        ON p.programid = prgorg.programid 
+
+    
+
+      INNER JOIN programstage AS ps
+
+        ON p.programid = ps.programid
+
+      
+
+      INNER JOIN programstageinstance AS psi
+
+        ON psi.organisationunitid = ou.organisationunitid 
+
+          AND psi.programstageid = ps.programstageid  
+
+    
+
+      INNER JOIN trackedentitydatavalue AS newSts
+
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+
+    
+
+      -- add an event for the first period a data value exists, if data exists 
+
+      -- before any of the events in the system 
+
+      INNER JOIN (   
+
+            SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
+
+              FROM  datavalue dv
+
+                    INNER JOIN period p 
+
+                      ON p.periodid = dv.periodid
+
+                    INNER JOIN organisationunit ou
+
+                      ON ou.organisationunitid = dv.sourceid
+
+                    INNER JOIN datasetelement dse
+
+                      ON dse.dataelementid = dv.dataelementid
+
+                    INNER JOIN dataset ds  -- only look for non sticky data
+
+                      ON ds.datasetid = dse.datasetid
+
+                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
+
+          GROUP BY  ou.parentid
+
+      ) firstdataperiod
+
+        ON firstdataperiod.ouid = ou.organisationunitid
+
+        AND firstdataperiod.earliestdate &lt; date_trunc('month', psi.executiondate)
+
+
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
+
+      AND ou.hierarchylevel = 6 
+
+
+
+UNION
+
+-- Part 3 : same as part 2 but for unknown ou's (e.g. where we don't find events
+
+-- for an ou, see null filter in where clause)
+
+    SELECT
+
+       psi.uid AS programuid
+
+     , ou.uid AS ouuid
+
+     , coalesce(to_char(firstdataperiod.earliestdate, 'YYYYMM'),'201701') AS period
+
+     , coalesce(firstdataperiod.earliestdate, '2017-01-01 00:00:00.0') AS eventdate
+
+     , psi.programstageid AS programstageid
+
+     , '' AS &quot;prevSts&quot;
+
+     , CASE 
+
+       WHEN firstdataperiod.earliestdate IS NULL 
+
+       THEN '' -- js_StickyUtil.js treats blank as unknown status
+
+       ELSE 'UNC' 
+
+       END 
+
+       AS &quot;newSts&quot; 
+
+     , null AS &quot;elapsDate&quot;
+
+     , null AS &quot;noteData&quot;
+
+    
+
+    FROM organisationunit ou
+
+    
+
+      INNER JOIN program_organisationunits AS prgorg
+
+        ON prgorg.organisationunitid = ou.organisationunitid
+
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
+
+    
+
+      INNER JOIN program p 
+
+        ON p.programid = prgorg.programid 
+
+    
+
+      INNER JOIN programstage AS ps
+
+        ON p.programid = ps.programid
+
+      
+
+      LEFT JOIN programstageinstance AS psi
+
+        ON psi.organisationunitid = ou.organisationunitid 
+
+          AND psi.programstageid = ps.programstageid  
+
+    
+
+      LEFT JOIN trackedentitydatavalue AS newSts
+
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'XhFcLwoD1Dr' limit 1 ) -- 244950
+
+    
+
+      -- add an event for the first period a data value exists, if data exists 
+
+      -- before any of the events in the system 
+
+      LEFT JOIN (   
+
+            SELECT  ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
+
+              FROM  datavalue dv
+
+                    INNER JOIN period p 
+
+                      ON p.periodid = dv.periodid
+
+                    INNER JOIN organisationunit ou
+
+                      ON ou.organisationunitid = dv.sourceid
+
+                    INNER JOIN datasetelement dse
+
+                      ON dse.dataelementid = dv.dataelementid
+
+                    INNER JOIN dataset ds  -- only look for non sticky data
+
+                      ON ds.datasetid = dse.datasetid
+
+                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
+
+          GROUP BY  ou.parentid
+
+      ) firstdataperiod
+
+        ON firstdataperiod.ouid = ou.organisationunitid
+
+
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
+
+      AND ou.hierarchylevel = 6 
+
+      AND newSts IS null
+
+
+
+) all_events
+
+ORDER BY ouuid, eventdate;
+
 </sqlQuery>
 			<displayName>MSI_StickyScript_11_Events</displayName>
 			<publicAccess>rw------</publicAccess>
@@ -228,123 +396,240 @@ ORDER BY ouuid, eventdate;
 			<user id="Onhhhc9zamM"/>
 		</sqlView>
 		<sqlView id="VBbWciUfbDf" name="MSI_StickyScript_12_Events">
-			<sqlQuery>SELECT * FROM (
--- Part 1 : retrieve all sub segmentation events for org units the seg program is assigned to
-    SELECT 
-       psi.uid AS programuid
-     , ou.uid AS ouuid
-     , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
-     , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
-     , psi.programstageid AS programstageid
-     , prevSts.value AS &quot;prevSts&quot;
-     , coalesce(newSts.value, 'UNK') AS &quot;newSts&quot;
-     , elapsDate.value AS &quot;elapsDate&quot;
-     , noteData.value AS &quot;noteData&quot;
-     , prevSubSts.value AS &quot;prevSubSts&quot;
-     , coalesce(newSubSts.value, 'UNK') AS &quot;newSubSts&quot;
-    
-    from organisationunit ou
-    
-      INNER JOIN program_organisationunits AS prgorg
-        ON prgorg.organisationunitid = ou.organisationunitid
-        AND prgorg.programid = (select programid from program where uid = '${prgid}')
-    
-      INNER JOIN program p 
-        ON p.programid = prgorg.programid 
-    
-      INNER JOIN programstage AS ps
-        ON p.programid = ps.programid
-      
-      INNER JOIN programstageinstance AS psi
-        ON psi.organisationunitid = ou.organisationunitid 
-          AND psi.programstageid = ps.programstageid  
-    
-      INNER JOIN trackedentitydatavalue AS newSubSts
-        ON psi.programstageinstanceid = newSubSts.programstageinstanceid
-          AND newSubSts.dataelementid = (select dataelementid from dataelement where uid = 'DwXW311h36K' limit 1 ) --  2869119
-    
-      LEFT OUTER JOIN trackedentitydatavalue AS newSts
-        ON psi.programstageinstanceid = newSts.programstageinstanceid
-          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'wYoGZDnvu3n' limit 1 ) --  244951
-    
-      LEFT OUTER JOIN trackedentitydatavalue AS prevSts
-        ON psi.programstageinstanceid = prevSts.programstageinstanceid
-          AND prevSts.dataelementid = (select dataelementid from dataelement where uid = 'T2iHkAEidOd' limit 1 ) --  786154
-    
-      LEFT OUTER JOIN trackedentitydatavalue AS prevSubSts
-        ON psi.programstageinstanceid = prevSubSts.programstageinstanceid
-          AND prevSubSts.dataelementid = (select dataelementid from dataelement where uid = 'Lwugb7O0coU' limit 1 ) --  2869137
-          
-      LEFT OUTER JOIN trackedentitydatavalue AS elapsDate
-        ON psi.programstageinstanceid = elapsDate.programstageinstanceid
-          AND elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
-    
-      LEFT OUTER JOIN trackedentitydatavalue AS noteData
-        ON psi.programstageinstanceid = noteData.programstageinstanceid
-          AND noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
-    
-    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
-      AND ou.hierarchylevel = 6 
-
-UNION
--- Part 2 : Unknowns -- find if there is any data for ou's without a segmentation
--- (e.g. where we don't find events for an ou, see null filter in where clause)
-    SELECT
-       psi.uid AS programuid
-     , ou.uid AS ouuid
-     , coalesce(to_char(firstdataperiod.earliestdate, 'YYYYMM'),'201701') AS period
-     , coalesce(firstdataperiod.earliestdate, '2017-01-01 00:00:00.0') AS eventdate
-     , psi.programstageid AS programstageid
-     , 'UNK' AS &quot;prevSts&quot;
-     , 'UNK' AS &quot;newSts&quot;
-     , null AS &quot;elapsDate&quot;
-     , null AS &quot;noteData&quot;
-     , 'UNK' AS &quot;prevSubSts&quot;
-     , 'UNK' AS &quot;newSubSts&quot;
-    
-    FROM organisationunit ou
-    
-      INNER JOIN program_organisationunits AS prgorg
-        ON prgorg.organisationunitid = ou.organisationunitid
-        AND prgorg.programid = (select programid from program where uid = '${prgid}')
-    
-      INNER JOIN program p 
-        ON p.programid = prgorg.programid 
-    
-      INNER JOIN programstage AS ps
-        ON p.programid = ps.programid
-      
-      LEFT JOIN programstageinstance AS psi
-        ON psi.organisationunitid = ou.organisationunitid 
-          AND psi.programstageid = ps.programstageid  
-    
-      LEFT JOIN trackedentitydatavalue AS newSts
-        ON psi.programstageinstanceid = newSts.programstageinstanceid
-          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'wYoGZDnvu3n' limit 1 ) -- 244950
-    
-      -- add an event for the first period a data value exists, if data exists 
-      -- before any of the events in the system 
-      INNER JOIN (   
-            SELECT ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
-              FROM  datavalue dv
-                    INNER JOIN period p 
-                      ON p.periodid = dv.periodid
-                    INNER JOIN organisationunit ou
-                      ON ou.organisationunitid = dv.sourceid
-                    INNER JOIN datasetelement dse
-                      ON dse.dataelementid = dv.dataelementid
-                    INNER JOIN dataset ds  -- only look for non sticky data
-                      ON ds.datasetid = dse.datasetid
-                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
-          GROUP BY  ou.parentid
-      ) firstdataperiod
-        ON firstdataperiod.ouid = ou.organisationunitid
-
-    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
-      AND ou.hierarchylevel = 6 
-      AND newSts IS null
-
-) all_events 
+			<sqlQuery>SELECT * FROM (
+
+-- Part 1 : retrieve all sub segmentation events for org units the seg program is assigned to
+
+    SELECT 
+
+       psi.uid AS programuid
+
+     , ou.uid AS ouuid
+
+     , coalesce(to_char( psi.executiondate,'YYYYMM'),'201701') AS period
+
+     , coalesce(psi.executiondate,'2017-01-01 00:00:00.0') AS eventdate
+
+     , psi.programstageid AS programstageid
+
+     , prevSts.value AS &quot;prevSts&quot;
+
+     , coalesce(newSts.value, 'UNK') AS &quot;newSts&quot;
+
+     , elapsDate.value AS &quot;elapsDate&quot;
+
+     , noteData.value AS &quot;noteData&quot;
+
+     , prevSubSts.value AS &quot;prevSubSts&quot;
+
+     , coalesce(newSubSts.value, 'UNK') AS &quot;newSubSts&quot;
+
+    
+
+    from organisationunit ou
+
+    
+
+      INNER JOIN program_organisationunits AS prgorg
+
+        ON prgorg.organisationunitid = ou.organisationunitid
+
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
+
+    
+
+      INNER JOIN program p 
+
+        ON p.programid = prgorg.programid 
+
+    
+
+      INNER JOIN programstage AS ps
+
+        ON p.programid = ps.programid
+
+      
+
+      INNER JOIN programstageinstance AS psi
+
+        ON psi.organisationunitid = ou.organisationunitid 
+
+          AND psi.programstageid = ps.programstageid  
+
+    
+
+      INNER JOIN trackedentitydatavalue AS newSubSts
+
+        ON psi.programstageinstanceid = newSubSts.programstageinstanceid
+
+          AND newSubSts.dataelementid = (select dataelementid from dataelement where uid = 'DwXW311h36K' limit 1 ) --  2869119
+
+    
+
+      LEFT OUTER JOIN trackedentitydatavalue AS newSts
+
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'wYoGZDnvu3n' limit 1 ) --  244951
+
+    
+
+      LEFT OUTER JOIN trackedentitydatavalue AS prevSts
+
+        ON psi.programstageinstanceid = prevSts.programstageinstanceid
+
+          AND prevSts.dataelementid = (select dataelementid from dataelement where uid = 'T2iHkAEidOd' limit 1 ) --  786154
+
+    
+
+      LEFT OUTER JOIN trackedentitydatavalue AS prevSubSts
+
+        ON psi.programstageinstanceid = prevSubSts.programstageinstanceid
+
+          AND prevSubSts.dataelementid = (select dataelementid from dataelement where uid = 'Lwugb7O0coU' limit 1 ) --  2869137
+
+          
+
+      LEFT OUTER JOIN trackedentitydatavalue AS elapsDate
+
+        ON psi.programstageinstanceid = elapsDate.programstageinstanceid
+
+          AND elapsDate.dataelementid = (select dataelementid from dataelement where uid = 'UrD7yr6JLEf' limit 1 ) --  786151
+
+    
+
+      LEFT OUTER JOIN trackedentitydatavalue AS noteData
+
+        ON psi.programstageinstanceid = noteData.programstageinstanceid
+
+          AND noteData.dataelementid = (select dataelementid from dataelement where uid = 'Yww3Z8MYo1e' limit 1 ) --  244949
+
+    
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
+
+      AND ou.hierarchylevel = 6 
+
+
+
+UNION
+
+-- Part 2 : Unknowns -- find if there is any data for ou's without a segmentation
+
+-- (e.g. where we don't find events for an ou, see null filter in where clause)
+
+    SELECT
+
+       psi.uid AS programuid
+
+     , ou.uid AS ouuid
+
+     , coalesce(to_char(firstdataperiod.earliestdate, 'YYYYMM'),'201701') AS period
+
+     , coalesce(firstdataperiod.earliestdate, '2017-01-01 00:00:00.0') AS eventdate
+
+     , psi.programstageid AS programstageid
+
+     , 'UNK' AS &quot;prevSts&quot;
+
+     , 'UNK' AS &quot;newSts&quot;
+
+     , null AS &quot;elapsDate&quot;
+
+     , null AS &quot;noteData&quot;
+
+     , 'UNK' AS &quot;prevSubSts&quot;
+
+     , 'UNK' AS &quot;newSubSts&quot;
+
+    
+
+    FROM organisationunit ou
+
+    
+
+      INNER JOIN program_organisationunits AS prgorg
+
+        ON prgorg.organisationunitid = ou.organisationunitid
+
+        AND prgorg.programid = (select programid from program where uid = '${prgid}')
+
+    
+
+      INNER JOIN program p 
+
+        ON p.programid = prgorg.programid 
+
+    
+
+      INNER JOIN programstage AS ps
+
+        ON p.programid = ps.programid
+
+      
+
+      LEFT JOIN programstageinstance AS psi
+
+        ON psi.organisationunitid = ou.organisationunitid 
+
+          AND psi.programstageid = ps.programstageid  
+
+    
+
+      LEFT JOIN trackedentitydatavalue AS newSts
+
+        ON psi.programstageinstanceid = newSts.programstageinstanceid
+
+          AND newSts.dataelementid = (select dataelementid from dataelement where uid = 'wYoGZDnvu3n' limit 1 ) -- 244950
+
+    
+
+      -- add an event for the first period a data value exists, if data exists 
+
+      -- before any of the events in the system 
+
+      INNER JOIN (   
+
+            SELECT ou.parentid AS ouid, MIN(p.startdate) AS earliestdate
+
+              FROM  datavalue dv
+
+                    INNER JOIN period p 
+
+                      ON p.periodid = dv.periodid
+
+                    INNER JOIN organisationunit ou
+
+                      ON ou.organisationunitid = dv.sourceid
+
+                    INNER JOIN datasetelement dse
+
+                      ON dse.dataelementid = dv.dataelementid
+
+                    INNER JOIN dataset ds  -- only look for non sticky data
+
+                      ON ds.datasetid = dse.datasetid
+
+                      AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
+
+          GROUP BY  ou.parentid
+
+      ) firstdataperiod
+
+        ON firstdataperiod.ouid = ou.organisationunitid
+
+
+
+    WHERE ( '${ouid}' = 'ALL' OR ou.path LIKE '%/${ouid}%' )
+
+      AND ou.hierarchylevel = 6 
+
+      AND newSts IS null
+
+
+
+) all_events 
+
 ORDER BY ouuid, eventdate;</sqlQuery>
 			<displayName>MSI_StickyScript_12_Events</displayName>
 			<publicAccess>rw------</publicAccess>
