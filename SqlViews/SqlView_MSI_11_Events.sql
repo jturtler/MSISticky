@@ -95,6 +95,7 @@ UNION
                     INNER JOIN dataset ds  -- only look for non sticky data
                       ON ds.datasetid = dse.datasetid
                       AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
+             WHERE  dv.deleted = FALSE
           GROUP BY  ou.parentid
       ) firstdataperiod
         ON firstdataperiod.ouid = ou.organisationunitid
@@ -156,6 +157,7 @@ UNION
                     INNER JOIN dataset ds  -- only look for non sticky data
                       ON ds.datasetid = dse.datasetid
                       AND ds.uid != 'ZAP8TO9fRZu' -- Status and segmentation dataset
+             WHERE  dv.deleted = FALSE
           GROUP BY  ou.parentid
       ) firstdataperiod
         ON firstdataperiod.ouid = ou.organisationunitid
